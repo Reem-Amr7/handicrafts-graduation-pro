@@ -11,6 +11,9 @@ export default {
       colors: {
         'custom-navbar': '#715E38D9',
       },
+      fontFamily: {
+        kufi: ["Reem Kufi", "sans-serif"],
+      },
     },
   },
   plugins: [

@@ -1,1 +1,26 @@
 .Home {}
+body{
+    background-color: #FFFCFC;
+    height: 5000px;
+}
+html {
+    direction: rtl;
+    text-align: right;
+}
+.leftside {
+    
+    background-color: #FFFCFC !important;
+    border-radius: 8px;
+    border-color: #B18B5E;
+    border-width: 2px;
+  }
+  h3{
+    color: rgb(150, 49, 49);
+  }
+  h2{
+    color: #543310;
+  }
+h4{
+    font-size: 14px;
+    color: gray;
+}
