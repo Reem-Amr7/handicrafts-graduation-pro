@@ -6,6 +6,10 @@ import Layout from './components/Layout/Layout'
 import Home from './components/Home/Home'
 import Login from './components/Login/Login'
 import Register from './components/Register/Register'
+import RePassword from './components/RePassword/RePassword'
+import OtpPage from './components/OtpPage/OtpPage'
+import RecoverPassword from './components/RecoverPassword/RecoverPassword'
+import NewPassword from './components/NewPassword/NewPassword'
 
 function App() {
  
@@ -17,6 +21,10 @@ function App() {
         { index: true, element: <Home /> },
         { path: "login", element: <Login /> },
         { path: "register", element: <Register /> },
+        { path: "repassword", element: <RePassword/> },
+        { path: "otp", element: <OtpPage/>},
+        { path: "recoverpassword", element: <RecoverPassword/>},
+        { path: "newpassword", element: <NewPassword/>},
         { path: "home", element: <Home /> },
         { path: "*", element: <Login /> }, // 404 page or redirect
       ],

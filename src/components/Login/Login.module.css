@@ -37,12 +37,12 @@
     margin-bottom: 1rem;
     border: 1px solid rgba(255, 255, 255, 0.3); /* حدود شبه شفافة */
     border-radius: 0.375rem;
-    background-color: rgba(255, 255, 255, 0.1); /* خلفية شبه شفافة للحقول */
+    background-color: rgba(255, 255, 255, 0.1); 
     color: white; /* لون النص الأبيض */
   }
   
   .formContainer input::placeholder {
-    color: rgba(255, 255, 255, 0.7); /* لون النص الشبه شفاف للنص البديل */
+    color: rgba(255, 255, 255, 0.7); 
   }
   
   .formContainer button {
@@ -61,6 +61,12 @@
     background-color: #3E331D;
   }
   
+button:disabled{
+  background-color: #a89b83 !important;
+  cursor: default;
+}
+
+
   /* .errorMessage {
     color: #ff6b6b; 
     font-size: 0.875rem;

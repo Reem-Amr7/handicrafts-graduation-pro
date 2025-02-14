@@ -1,0 +1,90 @@
+/* OtpPage.module.css */
+
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-size: cover;
+    background-position: center;
+  }
+  
+  .formContainer {
+    background-color: #715E38D9;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    width: 100%;
+    max-width: 400px;
+  }
+  
+  .title {
+    font-size: 2rem;
+    color:white;
+    margin-bottom: 1rem;
+  }
+  
+  .description {
+    font-size: 1rem;
+    color:#A68B55;
+    margin-bottom: 2rem;
+  }
+  
+  .otpForm {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .otpInputs {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+  }
+  
+  .otpInput {
+    width: 50px;
+    height: 50px;
+    text-align: center;
+    font-size: 1.5rem;
+    /* border: 1px solid #ccc; */
+    border-radius: 5px;
+    margin: 0 5px;
+    background-color: #A68B55; /* تغيير لون الخلفية */
+  color: #fff;
+  }
+  .otpInput:focus {
+    border-color: #A68B55; /* تغيير لون الحدود عند التركيز */
+    box-shadow: 0 0 0  #A68B55; /* إضافة ظل لتحديد التركيز */
+}
+  .confirmButton {
+    background-color: #2E230D;
+    color: White;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .confirmButton:hover {
+    background-color: #3E331D;
+  }
+  
+  .footerLinks {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1rem;
+  }
+  
+  .resendLink, .backLink {
+    color:#A68B55;
+    cursor: pointer;
+    
+  }
+  
+  .resendLink:hover, .backLink:hover {
+    text-decoration: underline;
+  }

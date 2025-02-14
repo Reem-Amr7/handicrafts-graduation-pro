@@ -45,7 +45,7 @@ export default function Login() {
     setIsLoading(true); 
     return await axios.post("https://ecommerce.routemisr.com/api/v1/auth/signin", values)
       .then((data) => {
-        console.log(data.data.message);
+        console.log(data.data);
         setUserMessage(data.data.message);
         setIsLoading(false);
         navigate('/');
@@ -125,7 +125,11 @@ export default function Login() {
               /> */}
               <label htmlFor="rememberMe" className=" text-[#A68B55] text-sm">ابقَ متصلاً على هذا الجهاز</label>
             </div>
-            <a href="#" className="text-sm text-[#A68B55] hover:underline">نسيت كلمة المرور؟</a>
+            {/* <a href="#" className="text-sm text-[#A68B55] hover:underline">نسيت كلمة المرور؟</a> */}
+            <span onClick={() => navigate('/repassword')} className="text-sm text-[#A68B55] hover:underline cursor-pointer">
+  نسيت كلمة المرور؟
+</span>
+
           </div>
 
           <div className='my-4 text-end'>
@@ -134,7 +138,9 @@ export default function Login() {
                 <i className='fa fa-spinner fa-spin'></i>
               </button>
             ) : (
-              <button type='submit' className='bg-[#2E230D] text-white px-4 py-2 rounded-lg w-full'>تسجيل الدخول</button>
+              <button
+              disabled={!(formik.isValid && formik.dirty)}
+              type='submit' className='bg-[#2E230D] text-white px-4 py-2 rounded-lg w-full'>تسجيل الدخول</button>
             )}
           </div>
 

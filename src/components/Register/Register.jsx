@@ -55,10 +55,11 @@ export default function Register() {
   let formik = useFormik({
     initialValues: {
       name: "",
+      lastname:"",
       email: "",
       password: "",
       rePassword: "",
-      phone: "",
+      // phone: "",
       gender: "", 
       birthDate: "" 
     },
@@ -89,7 +90,7 @@ export default function Register() {
   };
 
   return (
-    <div className={styles.container}>
+    <div className={styles.container} >
       <div className={styles.formContainer}>
         <h1 className='text-3xl text-center mb-6'>إنشاء حساب</h1>
         {userMessage ? (
@@ -104,7 +105,7 @@ export default function Register() {
         ) : null}
         <form onSubmit={formik.handleSubmit}>
           <div className='my-2'>
-            <label htmlFor="name" className="block mb-2 text-sm font-medium">الاسم</label>
+            <label htmlFor="name" className="block mb-2 text-sm font-medium">الاسم الاول</label>
             <input
               name="name"
               type="text"
@@ -118,6 +119,24 @@ export default function Register() {
             {formik.touched.name && formik.errors.name ? (
               <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400" role="alert">
                 <p>{formik.errors.name}</p>
+              </div>
+            ) : null}
+          </div>
+          <div className='my-2'>
+            <label htmlFor="lastname" className="block mb-2 text-sm font-medium">الاسم الاخير</label>
+            <input
+              name="lastname"
+              type="text"
+              id="lastname"
+              onChange={formik.handleChange}
+              value={formik.values.lastname}
+              onBlur={formik.handleBlur}
+              className=" border border-[#A68B55] text-white text-sm rounded-lg focus:ring-[#A68B55] focus:border-[#A68B55] block w-full p-2.5"
+              placeholder="أدخل الاسم"
+            />
+            {formik.touched.lastname && formik.errors.lastname ? (
+              <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400" role="alert">
+                <p>{formik.errors.lastname}</p>
               </div>
             ) : null}
           </div>
@@ -179,7 +198,7 @@ export default function Register() {
             ) : null}
           </div>
 
-          <div className='my-2'>
+          {/* <div className='my-2'>
             <label htmlFor="phone" className="block mb-2 text-sm font-medium">رقم الهاتف</label>
             <input
               name="phone"
@@ -196,7 +215,7 @@ export default function Register() {
                 <p>{formik.errors.phone}</p>
               </div>
             ) : null}
-          </div>
+          </div> */}
 
           <div className='my-2'>
             <label className="block mb-2 text-sm font-medium">النوع</label>
@@ -210,7 +229,7 @@ export default function Register() {
                 onBlur={formik.handleBlur}
                 className="w-4 h-4 text-[#A68B55] bg-gray-100 border-gray-300 rounded focus:ring-[#A68B55]"
               />
-              <label htmlFor="male" className="ml-2 text-sm">ذكر</label>
+              <label htmlFor="male" className="ml-2 text-sm p-2">ذكر</label>
             </div>
             <div className="flex items-center mt-2">
               <input
@@ -222,7 +241,7 @@ export default function Register() {
                 onBlur={formik.handleBlur}
                 className="w-4 h-4 text-[#A68B55] bg-gray-100 border-gray-300 rounded focus:ring-[#A68B55]"
               />
-              <label htmlFor="female" className="ml-2 text-sm">أنثى</label>
+              <label htmlFor="female" className="ml-2 text-sm p-2">أنثى</label>
             </div>
             {formik.touched.gender && formik.errors.gender ? (
               <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400" role="alert">
@@ -255,7 +274,8 @@ export default function Register() {
                 <i className='fa fa-spinner fa-spin'></i>
               </button>
             ) : (
-              <button type='submit' className='bg-[#2E230D] text-white px-4 py-2 rounded-lg w-full'>إنشاء حساب</button>
+              <button   
+               type='submit' className='bg-[#2E230D] text-white px-4 py-2 rounded-lg w-full'>إنشاء حساب</button>
             )}
           </div>
 

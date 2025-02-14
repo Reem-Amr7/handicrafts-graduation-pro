@@ -1,1 +1,152 @@
-.Navbar {}
+.header {
+  position: relative;
+  background-color: #A67C52;
+  color: white;
+  direction: rtl; 
+}
+
+.topBar {
+  display: flex;
+  padding: 0.5rem;
+  font-size: 0.875rem;
+  justify-content: flex-start; 
+  padding-left: 7rem; 
+  
+}
+
+.nav {
+  background-color: #FAF6F2;
+  padding: 1.7rem;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  flex-direction: row;
+  gap: 1rem;
+}
+
+.logo {
+  color: #A67C52;
+  font-size: 2.4rem;
+  font-weight: bold;
+  font-family: serif;
+  order: 1; 
+  margin-left: 0; 
+  margin-right: 100px; 
+  position: absolute; 
+  right: 50; 
+}
+
+.searchContainer {
+  display: flex;
+  align-items: center;
+  height: 35px; 
+  width:25%;
+  background-color: white;
+  border-radius: 15px;
+  border: 1px solid #A67C52;
+  order: 0;
+  margin-right: 15rem; 
+  overflow: hidden; 
+}
+
+.searchInput {
+  padding: 0.8rem; 
+  border: none;
+  outline: none;
+  color: black;
+  width: 100%; 
+  direction: rtl; 
+  height: 100%; 
+  font-size: 1rem;
+}
+
+.searchInput:focus {
+  border: none; 
+  box-shadow: none; 
+}
+
+.searchButton {
+  background-color: #A67C52;
+  color: white;
+  padding: 0.5rem 1rem; 
+  border: none;
+  cursor: pointer;
+  height: 100%;
+  border-radius: 0 15px 15px 0;
+  font-size: 1rem; 
+  width: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center; 
+}
+.profile {
+  display: flex;
+  width: 130px;
+  height: 40px;
+  align-items: center;
+  border: 1px solid #A67C52;
+  border-radius: 15px;
+  padding: 0.5rem 1rem;
+  background-color: white;
+  margin-right: 15rem;
+}
+
+.profileName {
+  color: black;
+  padding-right: 0.5rem; 
+}
+
+.profileImage {
+  width: 200%;
+  height: 120%;
+  margin-right: 2rem; 
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.socialIcons {
+  display: flex;
+  align-items: center;
+  margin-right: 1rem; 
+  border-radius: 100%;
+  gap: 1rem;
+  color: #A67C52;
+  font-size: 1.125rem;
+  order: 1;
+}
+
+.socialButton {
+  background-color: #FDF6EE;
+  padding: 0.75rem;
+  border-radius: 50%;
+  border: 1px solid #A67C52;
+  color: #A67C52;
+  cursor: pointer;
+}
+
+.menu {
+  position: sticky;
+  bottom: 0px;
+  /* margin-bottom: 5rem; */
+  padding-bottom: 5rem;
+  /* padding-right: 95rem;  */
+  /* transform: translateX(50%);  */
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  width: 100%;
+  /* max-width: 600px; */
+  background-color: #eddecd;
+}
+
+.menuLink {
+  color: #333;
+  text-decoration: none;
+  font-size: 18px;
+  padding: 8px 15px;
+  transition: 0.3s;
+}
+
+.menuLink:hover {
+  color: #A67C52;
+}

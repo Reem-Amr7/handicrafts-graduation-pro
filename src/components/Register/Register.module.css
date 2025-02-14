@@ -24,6 +24,7 @@
     max-width: 500px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); 
     color: white; 
+    margin-top: 65px;
   }
   .formContainer h1 {
     font-size: 2rem;
@@ -64,9 +65,9 @@
     font-weight: 500;
   }
   
-  .formContainer button:hover {
+.formContainer button:hover {
     background-color: #3E331D; 
-  }
+  } 
   
   .errorMessage {
     color: #ff6b6b; 
@@ -92,3 +93,7 @@ input[type="radio"]:checked {
   accent-color: #A68B55; 
 }
 
+/* button:disabled{
+  background-color: #d5c4a5;
+  cursor: not-allowed;
+} */

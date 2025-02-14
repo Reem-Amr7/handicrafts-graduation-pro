@@ -7,7 +7,11 @@ export default {
     flowbite.content(),
   ],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        'custom-navbar': '#715E38D9',
+      },
+    },
   },
   plugins: [
     flowbite.plugin(),
