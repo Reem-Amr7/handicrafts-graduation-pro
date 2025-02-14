@@ -1,8 +1,11 @@
 .header {
-  position: relative;
+  /* position: relative; */
   background-color: #A67C52;
   color: white;
   direction: rtl; 
+  
+
+  
 }
 
 .topBar {
@@ -11,29 +14,37 @@
   font-size: 0.875rem;
   justify-content: flex-start; 
   padding-left: 7rem; 
-  
+
 }
 
 .nav {
-  background-color: #FAF6F2;
+  /* background-color: #FAF6F2; */
+  background-color: #FFFCFC;
   padding: 1.7rem;
   display: flex;
   align-items: center;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  /* box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); */
   flex-direction: row;
   gap: 1rem;
+  /* border-bottom: 1.5px solid black; */
+  height: 70px;
+  justify-content: space-between;
+position: sticky;
+top: 0;
 }
 
 .logo {
-  color: #A67C52;
+  color: #B18B5E;
   font-size: 2.4rem;
   font-weight: bold;
   font-family: serif;
   order: 1; 
   margin-left: 0; 
-  margin-right: 100px; 
+  margin-top: 20px;
+  /* margin-right: 100px;  */
   position: absolute; 
-  right: 50; 
+  font-family: "Reem Kufi", serif  !important; /* استخدام الخط هنا */
+
 }
 
 .searchContainer {
@@ -42,10 +53,10 @@
   height: 35px; 
   width:25%;
   background-color: white;
-  border-radius: 15px;
+  border-radius: 8px;
   border: 1px solid #A67C52;
   order: 0;
-  margin-right: 15rem; 
+  margin-right: 8rem; 
   overflow: hidden; 
 }
 
@@ -58,6 +69,7 @@
   direction: rtl; 
   height: 100%; 
   font-size: 1rem;
+  padding: 4px;
 }
 
 .searchInput:focus {
@@ -72,7 +84,7 @@
   border: none;
   cursor: pointer;
   height: 100%;
-  border-radius: 0 15px 15px 0;
+  border-radius: 0 0px 8px 0;
   font-size: 1rem; 
   width: 80px;
   display: flex;
@@ -81,11 +93,11 @@
 }
 .profile {
   display: flex;
-  width: 130px;
+  width: 150px;
   height: 40px;
   align-items: center;
-  border: 1px solid #A67C52;
-  border-radius: 15px;
+  border: 1.5px solid #A67C52;
+  border-radius: 9px;
   padding: 0.5rem 1rem;
   background-color: white;
   margin-right: 15rem;
@@ -94,12 +106,13 @@
 .profileName {
   color: black;
   padding-right: 0.5rem; 
+  margin-right: 8px;
 }
 
 .profileImage {
-  width: 200%;
-  height: 120%;
-  margin-right: 2rem; 
+  width:35px;
+  height:35px;
+  /* margin-right: 2rem;  */
   border-radius: 50%;
   object-fit: cover;
 }
@@ -113,19 +126,25 @@
   color: #A67C52;
   font-size: 1.125rem;
   order: 1;
+
 }
+
 
 .socialButton {
   background-color: #FDF6EE;
-  padding: 0.75rem;
+  padding: 9px;
   border-radius: 50%;
   border: 1px solid #A67C52;
-  color: #A67C52;
+  color: #810000;
   cursor: pointer;
+  width: 40px;
+  height: 40px;
+
 }
+ 
 
 .menu {
-  position: sticky;
+  /* position: sticky; */
   bottom: 0px;
   /* margin-bottom: 5rem; */
   /* padding-bottom: 5rem; */
@@ -136,7 +155,13 @@
   justify-content: center;
   width: 100%;
   /* max-width: 600px; */
+<<<<<<< HEAD
   background-color: white !important;
+=======
+  border-top:1px solid #171224;
+  margin-top: 15px;
+  background-color: #FFFCFC;
+>>>>>>> 02e6595784f72aaac0558b601d11f73ee4aac93c
 }
 
 .menuLink {
@@ -144,9 +169,11 @@
   text-decoration: none;
   font-size: 18px;
   padding: 8px 15px;
-  transition: 0.3s;
-}
+  transition: color 0.3s, border-top 0.3s; }
 
 .menuLink:hover {
   color: #A67C52;
+  border-top: 3px solid #A67C52;
 }
+
+

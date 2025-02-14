@@ -2,7 +2,7 @@
   "name": "graduation-pro",
   "private": true,
   "version": "0.0.0",
-  "homepage": "https://Reem-Amr7.github.io/graduation-pro-front",  
+  "homepage": "https://Reem-Amr7.github.io/graduation-pro-front",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -18,7 +18,9 @@
     "flowbite-react": "^0.10.2",
     "formik": "^2.4.6",
     "generate-react-cli": "^8.4.9",
+    "lucide-react": "^0.475.0",
     "react": "^18.3.1",
+    "react-circular-progressbar": "^2.1.0",
     "react-dom": "^18.3.1",
     "react-router-dom": "6.4"
   },
