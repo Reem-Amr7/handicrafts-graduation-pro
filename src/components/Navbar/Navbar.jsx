@@ -50,12 +50,12 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* <div className={styles.menu}>
+      <div className={styles.menu}>
         <Link to="/collections" className={styles.menuLink}>مجموعاتك</Link>
         <Link to="/blog" className={styles.menuLink}>مدونة</Link>
         <Link to="/shop" className={styles.menuLink}>تسوق</Link>
         <Link to="/" className={styles.menuLink}>الرئيسية</Link>
-      </div> */}
+      </div>
     </header>
   );
 }

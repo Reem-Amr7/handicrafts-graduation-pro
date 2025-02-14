@@ -10,6 +10,7 @@ import RePassword from './components/RePassword/RePassword'
 import OtpPage from './components/OtpPage/OtpPage'
 import RecoverPassword from './components/RecoverPassword/RecoverPassword'
 import NewPassword from './components/NewPassword/NewPassword'
+import ProductDetails from './components/ProductDetails/ProductDetails'
 
 function App() {
  
@@ -26,6 +27,9 @@ function App() {
         { path: "recoverpassword", element: <RecoverPassword/>},
         { path: "newpassword", element: <NewPassword/>},
         { path: "home", element: <Home /> },
+        { path: "product-details", element: <ProductDetails /> },
+
+
         { path: "*", element: <Login /> }, // 404 page or redirect
       ],
     },
