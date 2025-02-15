@@ -11,7 +11,7 @@
     flex-direction: row-reverse;
     gap: 30px;
     padding: 20px;
-    padding-top:5rem;
+    padding-top:2rem;
     padding-top:50;
     background-color: #f5f5f5;
 }
@@ -212,14 +212,18 @@
     gap: 10px;
     width: 100%;
     margin-bottom: 10px;
-    justify-content: flex-end; /* يجعل العناصر تتجه إلى اليمين */
+    justify-content: flex-start; /* يجعل العناصر تتجه إلى اليمين */
+    
 }
 
 .profileImage {
+    display:flex;
+    justify-content:flex-end;
     width: 40px;
     height: 40px;
     border-radius: 50%;
     object-fit: cover;
+
 }
 
 .username {
@@ -280,7 +284,8 @@
     cursor: pointer;
     font-size: 1rem;
     transition: background 0.3s;
-    justify-content: flex-end;
+    justify-content: flex-start;
+    margin-left:5rem;
 }
 
 .cartButton:hover {

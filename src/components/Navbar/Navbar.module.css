@@ -147,7 +147,7 @@ top: 0;
   /* position: sticky; */
   bottom: 0px;
   /* margin-bottom: 5rem; */
-  /* padding-bottom: 5rem; */
+   padding-bottom: 1rem; 
   /* padding-right: 95rem;  */
   /* transform: translateX(50%);  */
   display: flex;

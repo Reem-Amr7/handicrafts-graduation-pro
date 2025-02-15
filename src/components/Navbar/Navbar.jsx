@@ -39,9 +39,9 @@ export default function Navbar() {
        </div>
 
        <div className={styles.socialIcons}>
-       <button className={styles.socialButton}>
-           <i className="fas fa-tv"></i> 
-         </button>
+       <Link to="/LiveStream" className={styles.socialButton}>
+   <i className="fas fa-tv"></i>
+</Link>
          <button className={styles.socialButton}>
            <i className="fas fa-shopping-cart"></i> 
          </button>

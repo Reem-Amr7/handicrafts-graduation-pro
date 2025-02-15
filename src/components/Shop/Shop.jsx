@@ -138,13 +138,13 @@ const Shop = () => {
         <h3>{product.title}</h3>
         <p>{product.description}</p>
         <div className={styles.productFooter}>
-          
-                    <span className={styles.likes}>❤ {product.likes}</span>
-                    <button className={styles.cartButton}>
-                    <span className="font-semibold">{product.price}$</span>
+        <button className={styles.cartButton}>
+                   
   <i className="fa-solid fa-cart-shopping text-lg"></i>
- 
+  <span className="font-semibold">{product.price}$</span>
 </button>
+                    <span className={styles.likes}>❤ {product.likes}</span>
+                    
 
 
         </div>
