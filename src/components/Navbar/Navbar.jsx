@@ -38,15 +38,6 @@ export default function Navbar() {
          <span className={styles.profileName}>الاسم</span>
        </div>
 
-<<<<<<< HEAD
-      <div className={styles.menu}>
-        <Link to="/collections" className={styles.menuLink}>مجموعاتك</Link>
-        <Link to="/blog" className={styles.menuLink}>مدونة</Link>
-        <Link to="/shop" className={styles.menuLink}>تسوق</Link>
-        <Link to="/" className={styles.menuLink}>الرئيسية</Link>
-      </div>
-    </header>
-=======
        <div className={styles.socialIcons}>
        <button className={styles.socialButton}>
            <i className="fas fa-tv"></i> 
@@ -76,6 +67,5 @@ export default function Navbar() {
        <Link to="/blog" className={styles.menuLink}>مدونة</Link>
      </div>
    </>
->>>>>>> 02e6595784f72aaac0558b601d11f73ee4aac93c
   );
 }
