@@ -155,13 +155,13 @@ top: 0;
   justify-content: center;
   width: 100%;
   /* max-width: 600px; */
-<<<<<<< HEAD
+
   background-color: white !important;
-=======
+
   border-top:1px solid #171224;
   margin-top: 15px;
   background-color: #FFFCFC;
->>>>>>> 02e6595784f72aaac0558b601d11f73ee4aac93c
+
 }
 
 .menuLink {
