@@ -1,9 +1,12 @@
 import React from 'react';
 import styles from './Navbar.module.css'; 
-import { Link } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import photo from "./../../assets/Screenshot 2025-02-13 210809.png";
 
 export default function Navbar() {
+ 
+    const Navigate = useNavigate(); 
+
   return (
     <>
       <header className={styles.header}>
@@ -32,14 +35,14 @@ export default function Navbar() {
           </div>
 
           <div className={styles.profile}>
-            <img src={photo} alt="الصورة الشخصية" className={styles.profileImage} />
-            <span className={styles.profileName}>الاسم</span>
+            <img  onClick={() => Navigate('/profile')} src={photo} alt="الصورة الشخصية" className={styles.profileImage} />
+            <span  className={styles.profileName}>الاسم</span>
           </div>
 
           <div className={styles.socialIcons}>
-            <button className={styles.socialButton}>
+            <Link to="/LiveStream" className={styles.socialButton}>
               <i className="fas fa-tv"></i>
-            </button>
+            </Link>
             <button className={styles.socialButton}>
               <i className="fas fa-shopping-cart"></i>
             </button>
