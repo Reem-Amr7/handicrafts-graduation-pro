@@ -12,7 +12,7 @@ import RecoverPassword from './components/RecoverPassword/RecoverPassword'
 import NewPassword from './components/NewPassword/NewPassword'
 import ProductDetails from './components/ProductDetails/ProductDetails'
 import Shop from './components/Shop/Shop'; // ✅ إضافة مكون Shop
-
+import LiveStream from './components/LiveStream/LiveStream';
 
 function App() {
  
@@ -31,7 +31,7 @@ function App() {
         { path: "home", element: <Home /> },
         { path: "product-details", element: <ProductDetails /> },
         {path: "shop", element: <Shop /> },
-       
+        {path:"LiveStream", element: <LiveStream/> },
       
 
 
