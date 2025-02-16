@@ -13,11 +13,11 @@ import NewPassword from './components/NewPassword/NewPassword'
 import Blog from './components/Blog/Blog'
 import ProductDetails from './components/ProductDetails/ProductDetails'
 
-import Shop from './components/Shop/Shop';
 import Profile from './components/Profile/Profile';
 
 import Shop from './components/Shop/Shop'; // ✅ إضافة مكون Shop
 import LiveStream from './components/LiveStream/LiveStream';
+import Blogdetail from './components/Blogdetails/Blogdetail';
 
 
 function App() {
@@ -36,13 +36,15 @@ function App() {
         { path: "newpassword", element: <NewPassword/>},
         { path: "home", element: <Home /> },
         { path: "*", element: <Login /> },
-        {path: "blog",element:<Blog/>} // 404 page or redirect
+        {path: "blog",element:<Blog/>}, // 404 page or redirect
         { path: "product-details", element: <ProductDetails /> },
         {path: "shop", element: <Shop /> },
 
         {path: "profile", element: <Profile/>},
 
         {path:"LiveStream", element: <LiveStream/> },
+        {path:"Blogdetails", element: <Blogdetail/> },
+
 
 
 

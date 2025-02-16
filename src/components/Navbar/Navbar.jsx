@@ -59,27 +59,7 @@ export default function Navbar() {
         </nav>
       </header>
 
-       <div className={styles.socialIcons}>
-       <button className={styles.socialButton}>
-           <i className="fas fa-tv"></i> 
-         </button>
-         <button className={styles.socialButton}>
-           <i className="fas fa-shopping-cart"></i> 
-         </button>
-         <button className={styles.socialButton}>
-           <i className="fas fa-bell"></i> 
-         </button>
-         <button className={styles.socialButton}>
-           <i className="fas fa-comment-alt"></i> 
-         </button>
-         <button className={styles.socialButton}>
-           <i className="fas fa-th-large"></i> 
-         </button>
-       </div>
-     </nav>
-
-   
-   </header>
+    
    <div className={styles.menu}>
    <Link to="/" className={styles.menuLink}>الرئيسية</Link>
 
@@ -88,15 +68,7 @@ export default function Navbar() {
 
        <Link to="/blog" className={styles.menuLink}>مدونة</Link>
      </div>
-   </>
-=======
-      <div className={styles.menu}>
-        <Link to="/collections" className={styles.menuLink}>مجموعاتك</Link>
-        <Link to="/blog" className={styles.menuLink}>مدونة</Link>
-        <Link to="/shop" className={styles.menuLink}>تسوق</Link>
-        <Link to="/" className={styles.menuLink}>الرئيسية</Link>
-      </div>
+
     </>
->>>>>>> 7915b22209ec77431c63c651f1ff832976e7809f
   );
 }
