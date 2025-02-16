@@ -10,7 +10,7 @@ import RePassword from './components/RePassword/RePassword'
 import OtpPage from './components/OtpPage/OtpPage'
 import RecoverPassword from './components/RecoverPassword/RecoverPassword'
 import NewPassword from './components/NewPassword/NewPassword'
-
+import Blog from './components/Blog/Blog'
 function App() {
  
   let routes = createBrowserRouter([
@@ -26,7 +26,8 @@ function App() {
         { path: "recoverpassword", element: <RecoverPassword/>},
         { path: "newpassword", element: <NewPassword/>},
         { path: "home", element: <Home /> },
-        { path: "*", element: <Login /> }, // 404 page or redirect
+        { path: "*", element: <Login /> },
+        {path: "blog",element:<Blog/>} // 404 page or redirect
       ],
     },
   ], {
