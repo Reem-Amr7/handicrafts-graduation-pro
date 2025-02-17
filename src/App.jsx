@@ -16,6 +16,7 @@ import ProductDetails from './components/ProductDetails/ProductDetails'
 import Profile from './components/Profile/Profile';
 import LiveStream from './components/LiveStream/LiveStream';
 import Blogdetail from './components/Blogdetails/Blogdetail';
+import Shop from './components/Shop/Shop';
 
 
 function App() {
@@ -36,7 +37,7 @@ function App() {
         { path: "*", element: <Login /> },
         {path: "blog",element:<Blog/>}, // 404 page or redirect
         { path: "product-details", element: <ProductDetails /> },
-        {path: "shop", element: <Shop /> },
+        {path: "shop", element: <Shop/> },
 
         {path: "profile", element: <Profile/>},
 
