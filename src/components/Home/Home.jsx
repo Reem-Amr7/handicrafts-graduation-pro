@@ -13,13 +13,11 @@ export default function Home() {
 
   return (
     <div>
-      {/* <button onClick={() => navigate('/product-details')}>details</button> */}
-
-      <div className="grid grid-cols-12 gap-4 p-4">
-        <div className="col-span-3"><Leftside /></div>
-        <div className="col-span-6"><Maincontent /></div>
-        <div className="col-span-3"><Rightside /></div>
-      </div>
+<div className="grid grid-cols-12 gap-4 p-4">
+      <Leftside/>
+     <Maincontent/>
+     <Rightside/>
     </div>
-  );
+    </div>
+  )
 }
