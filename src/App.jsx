@@ -14,8 +14,6 @@ import ProductDetails from './components/ProductDetails/ProductDetails'
 
 import Shop from './components/Shop/Shop';
 import Profile from './components/Profile/Profile';
-
-import Shop from './components/Shop/Shop'; // ✅ إضافة مكون Shop
 import LiveStream from './components/LiveStream/LiveStream';
 
 
