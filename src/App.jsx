@@ -1,63 +1,70 @@
-
-import { createBrowserRouter, RouterProvider } from 'react-router-dom'
-import './App.css'
-import Navbar from './components/Navbar/Navbar';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+// import TokenContextProvider from './TokenContext';
 import Layout from './components/Layout/Layout';
-import Home from './components/Home/Home'
-import Login from './components/Login/Login'
-import Register from './components/Register/Register'
-import RePassword from './components/RePassword/RePassword'
-import OtpPage from './components/OtpPage/OtpPage'
-import RecoverPassword from './components/RecoverPassword/RecoverPassword'
-import NewPassword from './components/NewPassword/NewPassword'
-import Blog from './components/Blog/Blog'
-import ProductDetails from './components/ProductDetails/ProductDetails'
-
+import Home from './components/Home/Home';
+import Login from './components/Login/Login';
+import Register from './components/Register/Register';
+import RePassword from './components/RePassword/RePassword';
+import OtpPage from './components/OtpPage/OtpPage';
+import RecoverPassword from './components/RecoverPassword/RecoverPassword';
+import NewPassword from './components/NewPassword/NewPassword';
+import Blog from './components/Blog/Blog';
+import ProductDetails from './components/ProductDetails/ProductDetails';
 import Profile from './components/Profile/Profile';
 import LiveStream from './components/LiveStream/LiveStream';
 import Blogdetail from './components/Blogdetails/Blogdetail';
 import Shop from './components/Shop/Shop';
 
-
 function App() {
- 
-  let routes = createBrowserRouter([
+  // const getStoredToken = () => {
+  //   return localStorage.getItem("userToken") || null;
+  // };
+
+  // const [token, setToken] = useState(getStoredToken);
+
+  // useEffect(() => {
+  //   if (token) {
+  //     localStorage.setItem("userToken", token);
+  //   } else {
+  //     localStorage.removeItem("userToken");
+  //   }
+  // }, [token]);
+
+  let routes = createBrowserRouter(
+    [
+      {
+        path: "/",
+        element: <Layout />,
+        children: [
+          { index: true, element: <Home /> },
+          { path: "login", element: <Login /> },
+          { path: "register", element: <Register /> },
+          { path: "repassword", element: <RePassword /> },
+          { path: "otp", element: <OtpPage /> },
+          { path: "recoverpassword", element: <RecoverPassword /> },
+          { path: "newpassword", element: <NewPassword /> },
+          { path: "home", element: <Home /> },
+          { path: "blog", element: <Blog /> },
+          { path: "product-details", element: <ProductDetails /> },
+          { path: "shop", element: <Shop /> },
+          { path: "profile", element: <Profile /> },
+          { path: "LiveStream", element: <LiveStream /> },
+          { path: "Blogdetails", element: <Blogdetail /> },
+          { path: "*", element: <Login /> },
+        ],
+      },
+    ],
     {
-      path: "/",
-      element: <Layout />,
-      children: [
-        { index: true, element: <Home /> },
-        { path: "login", element: <Login /> },
-        { path: "register", element: <Register /> },
-        { path: "repassword", element: <RePassword/> },
-        { path: "otp", element: <OtpPage/>},
-        { path: "recoverpassword", element: <RecoverPassword/>},
-        { path: "newpassword", element: <NewPassword/>},
-        { path: "home", element: <Home /> },
-        { path: "*", element: <Login /> },
-        {path: "blog",element:<Blog/>}, // 404 page or redirect
-        { path: "product-details", element: <ProductDetails /> },
-        {path: "shop", element: <Shop/> },
+      basename: "/graduation-pro-front",
+    }
+  );
 
-        {path: "profile", element: <Profile/>},
-
-        {path:"LiveStream", element: <LiveStream/> },
-        {path:"Blogdetails", element: <Blogdetail/> },
-
-
-
-
-        { path: "*", element: <Login /> }, // 404 page or redirect
-      ],
-    },
-  ], {
-    basename: "/graduation-pro-front", 
-  });
   return (
-    <>
- <RouterProvider router={routes}></RouterProvider>
-    </>
-  )
+   
+      <RouterProvider router={routes} />
+   
+  );
 }
 
-export default App
+export default App;

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import styles from "./Register.module.css"; // استيراد الأنماط
+import styles from "./Register.module.css";
 import { useFormik } from 'formik';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -12,284 +12,175 @@ export default function Register() {
 
   function validate(values) {
     let errors = {};
-    if (!values.name) {
-      errors.name = "الاسم مطلوب";
-    } else if (values.name.length < 3) {
-      errors.name = "يجب أن يكون الاسم على الأقل 3 أحرف";
+    if (!values.firstName || values.firstName.length < 3) {
+      errors.firstName = "الاسم الأول يجب أن يكون على الأقل 3 أحرف";
     }
-    if (!values.email) {
-      errors.email = 'البريد الإلكتروني مطلوب';
-    } else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i.test(values.email)) {
+    if (!values.lastName || values.lastName.length < 3) {
+      errors.lastName = "الاسم الأخير يجب أن يكون على الأقل 3 أحرف";
+    }
+    if (!values.email || !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i.test(values.email)) {
       errors.email = 'بريد إلكتروني غير صحيح';
     }
-
-    if (!values.password) {
-      errors.password = "كلمة المرور مطلوبة";
-    } else if (!/^[A-Z][a-z0-9]{3,8}$/i.test(values.password)) {
-      errors.password = "كلمة مرور غير صحيحة";
+    if (!values.password || values.password.length < 8) {
+      errors.password = "كلمة المرور يجب أن تحتوي على 8 أحرف على الأقل";
     }
-    if (!values.rePassword) {
-      errors.rePassword = "تأكيد كلمة المرور مطلوب";
-    } else if (values.rePassword !== values.password) {
-      errors.rePassword = "كلمة المرور غير متطابقة";
+    if (!values.confirmPassword || values.confirmPassword !== values.password) {
+      errors.confirmPassword = "كلمة المرور غير متطابقة";
     }
-
-    if (!values.phone) {
-      errors.phone = "رقم الهاتف مطلوب";
-    } else if (!/^(002)?01[0125][0-9]{8}$/i.test(values.phone)) {
-      errors.phone = "رقم هاتف غير صحيح";
+    if (!values.dateOfBirth) {
+      errors.dateOfBirth = "تاريخ الميلاد مطلوب";
     }
-
     if (!values.gender) {
       errors.gender = "النوع مطلوب";
-    }
-
-    if (!values.birthDate) {
-      errors.birthDate = "تاريخ الميلاد مطلوب";
-    } else if (new Date(values.birthDate) > new Date()) {
-      errors.birthDate = "تاريخ الميلاد غير صحيح";
     }
     return errors;
   }
 
   let formik = useFormik({
     initialValues: {
-      name: "",
-      lastname:"",
+      firstName: "",
+      lastName: "",
       email: "",
       password: "",
-      rePassword: "",
-      // phone: "",
-      gender: "", 
-      birthDate: "" 
+      confirmPassword: "",
+      dateOfBirth: "",
+      gender: ""
     },
     validate,
-    onSubmit: (values) => {
-      registerForm(values);
+    onSubmit: async (values) => {
+      setIsLoading(true);
+      try {
+        console.log("Data being sent to API:", values); 
+
+        const response = await axios.post("https://ourheritage.runasp.net/api/Auth/register", values, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          }
+        });
+
+        console.log("Response from API:", response.data); 
+
+        if (response.data.success) {
+          setUserMessage("تم التسجيل بنجاح");
+          navigate('/home');
+
+        } else {
+          setErrorMessage(response.data.message || "حدث خطأ أثناء التسجيل");
+        }
+      } catch (err) {
+        const errorMessage = err.response?.data?.message || "حدث خطأ أثناء التسجيل";
+        console.error("Error during registration:", errorMessage); // طباعة الخطأ في الكونسول
+
+        if (errorMessage.includes("email already exists")) {
+          setErrorMessage("البريد الإلكتروني مستخدم بالفعل");
+        } else {
+          setErrorMessage(errorMessage);
+        }
+      }
+      setIsLoading(false);
     },
   });
-
-  async function registerForm(values) {
-    setIsLoading(true); 
-    return await axios.post("https://ecommerce.routemisr.com/api/v1/auth/signup", values)
-      .then((data) => {
-        console.log(data.data.message);
-        setUserMessage(data.data.message);
-        setIsLoading(false);
-        navigate('/login');
-      })
-      .catch((err) => {
-        console.log(err.response.data.message);
-        setErrorMessage(err.response.data.message);
-        setIsLoading(false);
-      });
-  }
-
-  const handleLoginClick = () => {
-    navigate('/login'); 
-  };
+ 
 
   return (
-    <div className={styles.container} >
+    <div className={styles.container}>
       <div className={styles.formContainer}>
         <h1 className='text-3xl text-center mb-6'>إنشاء حساب</h1>
-        {userMessage ? (
+        {userMessage && (
           <div className="p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50 dark:bg-gray-800 dark:text-green-400" role="alert">
             <p>{userMessage}</p>
           </div>
-        ) : null}
-        {errorMessage ? (
+        )}
+        {errorMessage && (
           <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400" role="alert">
             <p>{errorMessage}</p>
           </div>
-        ) : null}
+        )}
         <form onSubmit={formik.handleSubmit}>
           <div className='my-2'>
-            <label htmlFor="name" className="block mb-2 text-sm font-medium">الاسم الاول</label>
+            <label>الاسم الأول</label>
             <input
-              name="name"
-              type="text"
-              id="name"
+              name="firstName"
               onChange={formik.handleChange}
-              value={formik.values.name}
-              onBlur={formik.handleBlur}
-              className=" border border-[#A68B55] text-white text-sm rounded-lg focus:ring-[#A68B55] focus:border-[#A68B55] block w-full p-2.5"
-              placeholder="أدخل الاسم"
+              value={formik.values.firstName}
+              placeholder="الاسم الأول"
             />
-            {formik.touched.name && formik.errors.name ? (
-              <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400" role="alert">
-                <p>{formik.errors.name}</p>
-              </div>
-            ) : null}
+            {formik.errors.firstName && <div className="text-red-500">{formik.errors.firstName}</div>}
           </div>
           <div className='my-2'>
-            <label htmlFor="lastname" className="block mb-2 text-sm font-medium">الاسم الاخير</label>
+            <label>الاسم الأخير</label>
             <input
-              name="lastname"
-              type="text"
-              id="lastname"
+              name="lastName"
               onChange={formik.handleChange}
-              value={formik.values.lastname}
-              onBlur={formik.handleBlur}
-              className=" border border-[#A68B55] text-white text-sm rounded-lg focus:ring-[#A68B55] focus:border-[#A68B55] block w-full p-2.5"
-              placeholder="أدخل الاسم"
+              value={formik.values.lastName}
+              placeholder="الاسم الأخير"
             />
-            {formik.touched.lastname && formik.errors.lastname ? (
-              <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400" role="alert">
-                <p>{formik.errors.lastname}</p>
-              </div>
-            ) : null}
+            {formik.errors.lastName && <div className="text-red-500">{formik.errors.lastName}</div>}
           </div>
-
           <div className='my-2'>
-            <label htmlFor="email" className="block mb-2 text-sm font-medium">البريد الإلكتروني</label>
+            <label>البريد الإلكتروني</label>
             <input
               name="email"
               type="email"
-              id="email"
               onChange={formik.handleChange}
               value={formik.values.email}
-              onBlur={formik.handleBlur}
-              className=" border border-[#A68B55] text-white text-sm rounded-lg focus:ring-[#A68B55] focus:border-[#A68B55] block w-full p-2.5"
-              placeholder="أدخل البريد الإلكتروني"
+              placeholder="البريد الإلكتروني"
             />
-            {formik.touched.email && formik.errors.email ? (
-              <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400" role="alert">
-                <p>{formik.errors.email}</p>
-              </div>
-            ) : null}
+            {formik.errors.email && <div className="text-red-500">{formik.errors.email}</div>}
           </div>
-
           <div className='my-2'>
-            <label htmlFor="password" className="block mb-2 text-sm font-medium">كلمة المرور</label>
+            <label>كلمة المرور</label>
             <input
               name="password"
               type="password"
-              id="password"
               onChange={formik.handleChange}
               value={formik.values.password}
-              onBlur={formik.handleBlur}
-              className=" border border-[#A68B55] text-white text-sm rounded-lg focus:ring-[#A68B55] focus:border-[#A68B55] block w-full p-2.5"
-              placeholder="أدخل كلمة المرور"
+              placeholder="كلمة المرور"
             />
-            {formik.touched.password && formik.errors.password ? (
-              <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400" role="alert">
-                <p>{formik.errors.password}</p>
-              </div>
-            ) : null}
+            {formik.errors.password && <div className="text-red-500">{formik.errors.password}</div>}
           </div>
-
           <div className='my-2'>
-            <label htmlFor="rePassword" className="block mb-2 text-sm font-medium">تأكيد كلمة المرور</label>
+            <label>تأكيد كلمة المرور</label>
             <input
-              name="rePassword"
+              name="confirmPassword"
               type="password"
-              id="rePassword"
               onChange={formik.handleChange}
-              value={formik.values.rePassword}
-              onBlur={formik.handleBlur}
-              className=" border border-[#A68B55] text-white text-sm rounded-lg focus:ring-[#A68B55] focus:border-[#A68B55] block w-full p-2.5"
-              placeholder="أعد إدخال كلمة المرور"
+              value={formik.values.confirmPassword}
+              placeholder="تأكيد كلمة المرور"
             />
-            {formik.touched.rePassword && formik.errors.rePassword ? (
-              <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400" role="alert">
-                <p>{formik.errors.rePassword}</p>
-              </div>
-            ) : null}
+            {formik.errors.confirmPassword && <div className="text-red-500">{formik.errors.confirmPassword}</div>}
           </div>
-
-          {/* <div className='my-2'>
-            <label htmlFor="phone" className="block mb-2 text-sm font-medium">رقم الهاتف</label>
-            <input
-              name="phone"
-              type="tel"
-              id="phone"
-              onChange={formik.handleChange}
-              value={formik.values.phone}
-              onBlur={formik.handleBlur}
-              className=" border border-[#A68B55] text-white text-sm rounded-lg focus:ring-[#A68B55] focus:border-[#A68B55] block w-full p-2.5"
-              placeholder="أدخل رقم الهاتف"
-            />
-            {formik.touched.phone && formik.errors.phone ? (
-              <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400" role="alert">
-                <p>{formik.errors.phone}</p>
-              </div>
-            ) : null}
-          </div> */}
-
           <div className='my-2'>
-            <label className="block mb-2 text-sm font-medium">النوع</label>
-            <div className="flex items-center">
-              <input
-                type="radio"
-                id="male"
-                name="gender"
-                value="ذكر"
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                className="w-4 h-4 text-[#A68B55] bg-gray-100 border-gray-300 rounded focus:ring-[#A68B55]"
-              />
-              <label htmlFor="male" className="ml-2 text-sm p-2">ذكر</label>
-            </div>
-            <div className="flex items-center mt-2">
-              <input
-                type="radio"
-                id="female"
-                name="gender"
-                value="أنثى"
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                className="w-4 h-4 text-[#A68B55] bg-gray-100 border-gray-300 rounded focus:ring-[#A68B55]"
-              />
-              <label htmlFor="female" className="ml-2 text-sm p-2">أنثى</label>
-            </div>
-            {formik.touched.gender && formik.errors.gender ? (
-              <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400" role="alert">
-                <p>{formik.errors.gender}</p>
-              </div>
-            ) : null}
-          </div>
-
-          <div className='my-2'>
-            <label htmlFor="birthDate" className="block mb-2 text-sm font-medium">تاريخ الميلاد</label>
+            <label>تاريخ الميلاد</label>
             <input
-              name="birthDate"
+              name="dateOfBirth"
               type="date"
-              id="birthDate"
               onChange={formik.handleChange}
-              value={formik.values.birthDate}
-              onBlur={formik.handleBlur}
-              className="bg-[#A68B55] border border-[#A68B55] text-white text-sm rounded-lg focus:ring-[#A68B55] focus:border-[#A68B55] block w-full p-2.5"
+              value={formik.values.dateOfBirth}
             />
-            {formik.touched.birthDate && formik.errors.birthDate ? (
-              <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400" role="alert">
-                <p>{formik.errors.birthDate}</p>
-              </div>
-            ) : null}
+            {formik.errors.dateOfBirth && <div className="text-red-500">{formik.errors.dateOfBirth}</div>}
           </div>
-
-          <div className='my-4 text-end'>
-            {isLoading ? (
-              <button type='submit' className='bg-[#2E230D] text-white px-4 py-2 rounded-lg w-full'>
-                <i className='fa fa-spinner fa-spin'></i>
-              </button>
-            ) : (
-              <button   
-               type='submit' className='bg-[#2E230D] text-white px-4 py-2 rounded-lg w-full'>إنشاء حساب</button>
-            )}
+          <div className='my-2'>
+            <label>الجنس</label>
+            <select
+              name="gender"
+              onChange={formik.handleChange}
+              value={formik.values.gender}
+            >
+              <option value="">اختر الجنس</option>
+              <option value="1">ذكر</option>
+              <option value="0">أنثى</option>
+            </select>
+            {formik.errors.gender && <div className="text-red-500">{formik.errors.gender}</div>}
           </div>
-
-          <div className='text-center mt-4'>
-            <p className="text-sm">
-              لديك حساب بالفعل؟{' '}
-              <span
-                onClick={handleLoginClick}
-                className="text-[#A68B55] hover:underline cursor-pointer"
-              >
-                تسجيل الدخول
-              </span>
-            </p>
-          </div>
+          <button
+          
+            type="submit"
+            disabled={isLoading}
+            className='bg-[#2E230D] text-white px-4 py-2 rounded-lg w-full'
+          >
+            {isLoading ? "جارٍ التحميل..." : "إنشاء حساب"}
+          </button>
         </form>
       </div>
     </div>

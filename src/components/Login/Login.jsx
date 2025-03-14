@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import background from "./../../assets/background.jpg";
-import styles from "./Login.module.css"; 
+import styles from "./Login.module.css";
 import { useFormik } from 'formik';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { useContext } from 'react';
+import { TokenContext } from '../../Context/TokenContext';
 
 export default function Login() {
+  let { token, setToken } = useContext(TokenContext);
   const [userMessage, setUserMessage] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -14,7 +17,7 @@ export default function Login() {
 
   function validate(values) {
     let errors = {};
-   
+
     if (!values.email) {
       errors.email = 'البريد الإلكتروني مطلوب';
     } else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i.test(values.email)) {
@@ -23,10 +26,8 @@ export default function Login() {
 
     if (!values.password) {
       errors.password = "كلمة المرور مطلوبة";
-    } else if (!/^[A-Z][a-z0-9]{3,8}$/i.test(values.password)) {
-      errors.password = "كلمة مرور غير صحيحة";
     }
-    
+
     return errors;
   }
 
@@ -42,23 +43,35 @@ export default function Login() {
   });
 
   async function loginForm(values) {
-    setIsLoading(true); 
-    return await axios.post("https://ecommerce.routemisr.com/api/v1/auth/signin", values)
-      .then((data) => {
-        console.log(data.data);
-        setUserMessage(data.data.message);
+    setIsLoading(true);
+    try {
+      const response = await axios.post("https://ourheritage.runasp.net/api/Auth/login", values, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        }
+      });
+
+      if (response.data && response.data.model && response.data.model.token) {
+        const token = response.data.model.token;
+        console.log(token);
+        localStorage.setItem("userToken", token);
+        setToken(token); // تم التعديل هنا
+        setUserMessage(response.data.message);
         setIsLoading(false);
         navigate('/');
-      })
-      .catch((err) => {
-        console.log(err.response.data.message);
-        setErrorMessage(err.response.data.message);
-        setIsLoading(false);
-      });
+      } else {
+        throw new Error("Invalid response structure");
+      }
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || "حدث خطأ ما"; // تم التعديل هنا
+      console.log(errorMessage);
+      setErrorMessage(errorMessage);
+      setIsLoading(false);
+    }
   }
 
   const handleCreateAccountClick = () => {
-    navigate('/register'); 
+    navigate('/register');
   };
 
   return (
@@ -116,20 +129,11 @@ export default function Login() {
 
           <div className='my-4 flex items-center justify-between'>
             <div className='flex items-center'>
-              {/* <input
-                type="checkbox"
-                id="rememberMe"
-                checked={rememberMe}
-                onChange={() => setRememberMe(!rememberMe)}
-                className="custom-checkbox  "
-              /> */}
               <label htmlFor="rememberMe" className=" text-[#A68B55] text-sm">ابقَ متصلاً على هذا الجهاز</label>
             </div>
-            {/* <a href="#" className="text-sm text-[#A68B55] hover:underline">نسيت كلمة المرور؟</a> */}
             <span onClick={() => navigate('/repassword')} className="text-sm text-[#A68B55] hover:underline cursor-pointer">
-  نسيت كلمة المرور؟
-</span>
-
+              نسيت كلمة المرور؟
+            </span>
           </div>
 
           <div className='my-4 text-end'>
@@ -139,8 +143,8 @@ export default function Login() {
               </button>
             ) : (
               <button
-              disabled={!(formik.isValid && formik.dirty)}
-              type='submit' className='bg-[#2E230D] text-white px-4 py-2 rounded-lg w-full'>تسجيل الدخول</button>
+                disabled={!(formik.isValid && formik.dirty)}
+                type='submit' className='bg-[#2E230D] text-white px-4 py-2 rounded-lg w-full'>تسجيل الدخول</button>
             )}
           </div>
 

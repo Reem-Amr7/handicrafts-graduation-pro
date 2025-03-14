@@ -6,7 +6,6 @@ import photo from "./../../assets/Screenshot 2025-02-13 210809.png";
 export default function Navbar() {
  
     const Navigate = useNavigate(); 
-
   return (
     <>
       <header className={styles.header}>
