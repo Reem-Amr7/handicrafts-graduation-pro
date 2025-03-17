@@ -53,8 +53,9 @@ export default function Login() {
 
       if (response.data && response.data.model && response.data.model.token) {
         const token = response.data.model.token;
-        console.log(token);
-        localStorage.setItem("userToken", token);
+        const userId = response.data.model.userId; // استخراج الـ userId من الاستجابة
+        localStorage.setItem("userToken", token); // تخزين التوكن
+        localStorage.setItem("userId", userId); // تخزين userId في الـ localStorage
         setToken(token); // تم التعديل هنا
         setUserMessage(response.data.message);
         setIsLoading(false);

@@ -24,3 +24,14 @@ h4{
     font-size: 14px;
     color: gray;
 }
+.settinglist{
+  margin-right: 500px;
+  margin-top: -40px;
+  position: relative;
+  z-index: 1;
+}
+.follow{
+  margin-right: 490px;
+  color:#771D1D;
+
+}

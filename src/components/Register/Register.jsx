@@ -60,16 +60,23 @@ export default function Register() {
 
         console.log("Response from API:", response.data); 
 
-        if (response.data.success) {
+        if (response.data.isSucceeded) {
           setUserMessage("تم التسجيل بنجاح");
-          navigate('/home');
+
+          // تخزين اسم المستخدم في localStorage
+          const fullName = `${values.firstName} ${values.lastName}`;
+          localStorage.setItem("userName", fullName); // تخزين الاسم الكامل
+
+          setTimeout(() => {
+            navigate('/');
+          }, 1000); 
 
         } else {
           setErrorMessage(response.data.message || "حدث خطأ أثناء التسجيل");
         }
       } catch (err) {
         const errorMessage = err.response?.data?.message || "حدث خطأ أثناء التسجيل";
-        console.error("Error during registration:", errorMessage); // طباعة الخطأ في الكونسول
+        console.error("Error during registration:", errorMessage);
 
         if (errorMessage.includes("email already exists")) {
           setErrorMessage("البريد الإلكتروني مستخدم بالفعل");
@@ -80,7 +87,6 @@ export default function Register() {
       setIsLoading(false);
     },
   });
- 
 
   return (
     <div className={styles.container}>
@@ -174,7 +180,6 @@ export default function Register() {
             {formik.errors.gender && <div className="text-red-500">{formik.errors.gender}</div>}
           </div>
           <button
-          
             type="submit"
             disabled={isLoading}
             className='bg-[#2E230D] text-white px-4 py-2 rounded-lg w-full'

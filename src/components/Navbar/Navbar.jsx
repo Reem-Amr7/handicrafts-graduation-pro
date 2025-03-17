@@ -1,11 +1,14 @@
 import React from 'react';
 import styles from './Navbar.module.css'; 
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import photo from "./../../assets/Screenshot 2025-02-13 210809.png";
 
 export default function Navbar() {
- 
-    const Navigate = useNavigate(); 
+  const navigate = useNavigate(); 
+
+  // جلب الاسم الكامل من localStorage
+  const userName = localStorage.getItem("userName");
+
   return (
     <>
       <header className={styles.header}>
@@ -34,8 +37,8 @@ export default function Navbar() {
           </div>
 
           <div className={styles.profile}>
-            <img  onClick={() => Navigate('/profile')} src={photo} alt="الصورة الشخصية" className={styles.profileImage} />
-            <span  className={styles.profileName}>الاسم</span>
+            <img onClick={() => navigate('/profile')} src={photo} alt="الصورة الشخصية" className={styles.profileImage} />
+            <span className={styles.profileName}>{userName || "الاسم"}</span> {/* عرض الاسم المخزن أو اسم افتراضي */}
           </div>
 
           <div className={styles.socialIcons}>
@@ -58,16 +61,12 @@ export default function Navbar() {
         </nav>
       </header>
 
-    
-   <div className={styles.menu}>
-   <Link to="/" className={styles.menuLink}>الرئيسية</Link>
-
-       <Link to="/collections" className={styles.menuLink}>مجموعاتك</Link>
-       <Link to="/shop" className={styles.menuLink}>تسوق</Link>
-
-       <Link to="/blog" className={styles.menuLink}>مدونة</Link>
-     </div>
-
+      <div className={styles.menu}>
+        <Link to="/" className={styles.menuLink}>الرئيسية</Link>
+        <Link to="/collections" className={styles.menuLink}>مجموعاتك</Link>
+        <Link to="/shop" className={styles.menuLink}>تسوق</Link>
+        <Link to="/blog" className={styles.menuLink}>مدونة</Link>
+      </div>
     </>
   );
 }
