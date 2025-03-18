@@ -1,33 +1,4 @@
-// import { useState } from 'react'; 
-// import { FaEllipsisH } from "react-icons/fa";
-// import styles from './Home.module.css';
 
-// export default function PostSetting() {
-//   const [isListOpen, setIsListOpen] = useState(false); 
-
-//   const handleShowList = () => {
-//     setIsListOpen(!isListOpen); 
-//   };
-
-//   return (
-//     <div className={styles.settinglist} >
-//       <span
-//         className="text-red-900 text-lg cursor-pointer "
-//         onClick={handleShowList}
-//       >
-//         <FaEllipsisH />
-//       </span>
-
-//       {isListOpen && (
-//         <div className="absolute bg-white shadow-lg border rounded-md mt-2 p-2 w-40 ">
-//           <p className="cursor-pointer hover:bg-gray-200 p-2">تعديل</p>
-//           <p className="cursor-pointer hover:bg-gray-200 p-2">حذف</p>
-//           <p className="cursor-pointer hover:bg-gray-200 p-2">إبلاغ</p>
-//         </div>
-//       )}
-//     </div>
-//   );
-// }
 import React, { useState } from 'react';
 import { FaEllipsisH } from "react-icons/fa";
 import styles from './Home.module.css';

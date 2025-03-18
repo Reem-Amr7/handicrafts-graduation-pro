@@ -9,6 +9,7 @@ export default function Navbar() {
   // جلب الاسم الكامل من localStorage
   const userName = localStorage.getItem("userName");
 
+
   return (
     <>
       <header className={styles.header}>

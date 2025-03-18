@@ -29,10 +29,10 @@ export default function AddPost() {
     e.preventDefault();
     const userId = localStorage.getItem("userId");
 
-    if (!formData.title || !formData.content || !formData.categoryId || !formData.imageUrl) {
-      setErrorMessage('يرجى تعبئة جميع الحقول المطلوبة');
-      return;
-    }
+    // if (!formData.title || !formData.content || !formData.categoryId || !formData.imageUrl) {
+    //   setErrorMessage('يرجى تعبئة جميع الحقول المطلوبة');
+    //   return;
+    // }
 
     if (!token) {
       setErrorMessage('لم يتم العثور على التوكن، يرجى تسجيل الدخول');
@@ -76,7 +76,7 @@ export default function AddPost() {
           imageUrl: '',
           dateCreated: new Date().toISOString(),
         });
-        setShowModal(false); // إغلاق الـ modal بعد النجاح
+        setShowModal(false);
       }
     } catch (error) {
       if (error.response) {
@@ -90,7 +90,7 @@ export default function AddPost() {
   };
 
   return (
-    <div className="p-5 h-44">
+    <div className="p-5">
       <h2 className="mb-4">إضافة منشور جديد</h2>
       <button
         onClick={() => setShowModal(true)}
@@ -100,32 +100,30 @@ export default function AddPost() {
       </button>
 
       {showModal && (
-        <div style={{ backgroundColor: 'rgba(0,0,0,0.5)', position: 'fixed', inset: '0', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 50 }}>
-          <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '8px', width: '30%' }}>
-            <h3 className="mb-4 text-center">إضافة منشور</h3>
+        <div className="fixed inset-0 flex justify-center items-center z-50 bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-2xl relative">
             <button
               onClick={() => setShowModal(false)}
-              className="absolute top-2 right-2 text-gray-600"
+              className="absolute top-2 right-4 text-gray-600 text-2xl"
             >
               ×
             </button>
-
-            <form onSubmit={handleSubmit} className="mt-4">
-              {errorMessage && (
-                <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50">
-                  <p>{errorMessage}</p>
-                </div>
-              )}
-              {successMessage && (
-                <div className="p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50">
-                  <p>{successMessage}</p>
-                </div>
-              )}
-
-              <div className="my-2">
-                <label htmlFor="title" className="block mb-2 text-sm font-medium">
-                  العنوان
-                </label>
+            <h3 className="mb-4 text-center text-lg font-semibold">إضافة منشور</h3>
+            
+            {errorMessage && (
+              <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50">
+                <p>{errorMessage}</p>
+              </div>
+            )}
+            {successMessage && (
+              <div className="p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50">
+                <p>{successMessage}</p>
+              </div>
+            )}
+            
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label htmlFor="title" className="block mb-1 font-medium">العنوان</label>
                 <input
                   name="title"
                   type="text"
@@ -137,10 +135,8 @@ export default function AddPost() {
                 />
               </div>
 
-              <div className="my-2">
-                <label htmlFor="content" className="block mb-2 text-sm font-medium">
-                  المحتوى
-                </label>
+              <div>
+                <label htmlFor="content" className="block mb-1 font-medium">المحتوى</label>
                 <textarea
                   name="content"
                   id="content"
@@ -151,10 +147,8 @@ export default function AddPost() {
                 />
               </div>
 
-              <div className="my-2">
-                <label htmlFor="categoryId" className="block mb-2 text-sm font-medium">
-                  فئة المنشور
-                </label>
+              <div>
+                <label htmlFor="categoryId" className="block mb-1 font-medium">فئة المنشور</label>
                 <input
                   name="categoryId"
                   type="number"
@@ -166,10 +160,8 @@ export default function AddPost() {
                 />
               </div>
 
-              <div className="my-2">
-                <label htmlFor="imageUrl" className="block mb-2 text-sm font-medium">
-                  رابط الصورة
-                </label>
+              <div>
+                <label htmlFor="imageUrl" className="block mb-1 font-medium">رابط الصورة</label>
                 <input
                   name="imageUrl"
                   type="text"
@@ -181,14 +173,9 @@ export default function AddPost() {
                 />
               </div>
 
-              <div className="my-4 text-end">
-                <button
-                  type="submit"
-                  className="bg-[#2E230D] text-white px-4 py-2 rounded-lg w-full"
-                >
-                  إضافة المنشور
-                </button>
-              </div>
+              <button type="submit" className="bg-[#2E230D] text-white px-4 py-2 rounded-lg w-full">
+                إضافة المنشور
+              </button>
             </form>
           </div>
         </div>
