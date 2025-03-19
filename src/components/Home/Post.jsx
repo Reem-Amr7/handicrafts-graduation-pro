@@ -20,39 +20,37 @@ export default function Home() {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    if (!token) {
-      setError("لا يوجد توكن! الرجاء تسجيل الدخول.");
-      return;
-    }
+    if (!token) return; // انتظر حتى يتم تحديث التوكن
 
     const fetchPosts = async () => {
-      try {
-        const apiUrl = `https://ourheritage.runasp.net/api/Articles?PageIndex=${pageIndex}&PageSize=${pageSize}`;
-        const response = await axios.get(apiUrl, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/json'
-          }
-        });
-        console.log("🚀 بيانات المنشورات:", response.data.items);
-        if (response.status === 200) {
-          setPosts(response.data.items || response.data);
-        } else {
-          setError('لا توجد منشورات حالياً.');
+        try {
+            const apiUrl = `https://ourheritage.runasp.net/api/Articles?PageIndex=${pageIndex}&PageSize=${pageSize}`;
+            const response = await axios.get(apiUrl, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (response.status === 200) {
+                setPosts(response.data.items || response.data);
+            } else {
+                setError('لا توجد منشورات حالياً.');
+            }
+        } catch (err) {
+            console.error('خطأ في جلب المنشورات:', err);
+            if (err.response?.status === 401) {
+                setError('انتهت صلاحية الجلسة، يرجى تسجيل الدخول مجددًا.');
+                localStorage.removeItem('userToken');
+            } else {
+                setError('حدث خطأ أثناء جلب المنشورات. حاول مرة أخرى.');
+            }
         }
-      } catch (err) {
-        console.error('خطأ في جلب المنشورات:', err);
-        if (err.response?.status === 401) {
-          setError('انتهت صلاحية الجلسة، يرجى تسجيل الدخول مجددًا.');
-          localStorage.removeItem('userToken');
-        } else {
-          setError('حدث خطأ أثناء جلب المنشورات. حاول مرة أخرى.');
-        }
-      }
     };
 
     fetchPosts();
-  }, [pageIndex, pageSize, token]);
+}, [pageIndex, pageSize, token]); // تأكد من أن `token` موجود قبل جلب البيانات
+
 
   const handleLike = (id) => {
     setPosts(prevPosts =>
