@@ -6,7 +6,7 @@ export default function () {
     <>
       <main className="col-span-6  p-9  ">
         <NewPost />
-        <Suggest />
+        {/* <Suggest /> */}
         <Post />
       </main>
     </>

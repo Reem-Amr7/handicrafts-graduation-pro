@@ -41,10 +41,7 @@ export default function PostSettings({post,setPosts}) {
             <p className="text-sm text-gray-500">إخفاء هذا المنشور</p>
           </div>
           <DeletePost postId={post.id} />
-          <div className="cursor-pointer hover:bg-gray-100 p-2">
-            <p className="font-semibold">الإبلاغ</p>
-            <p className="text-sm text-gray-500">محتوى غير مناسب</p>
-          </div>
+         
         </div>
       )}
     </div>

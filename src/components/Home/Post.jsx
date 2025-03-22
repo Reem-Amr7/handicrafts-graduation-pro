@@ -65,7 +65,9 @@ export default function Home() {
       prevPosts.map(post =>
         post.id === id ? { ...post, likeCount: post.likeCount + 1 } : post
       )
+    
     );
+
   };
 
   if (error) {
@@ -116,7 +118,7 @@ export default function Home() {
                     <Like post={post} onLike={() => handleLike(post.id)} />
                     <Share />
                     <Comment post={post} />
-                    <Watching />
+                    {/* <Watching /> */}
                   </div>
                   <div className="flex items-center gap-2 text-red-900 w-36">
                     <span className="mr-8">إعادة نشر</span>

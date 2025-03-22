@@ -3,6 +3,7 @@
   background-color: #A67C52;
   color: white;
   direction: rtl; 
+  /* background-color:#923D10; */
   
 
   
@@ -20,6 +21,8 @@
 .nav {
   /* background-color: #FAF6F2; */
   background-color: #FFFCFC;
+  /* background-color:#923D10; */
+
   padding: 1.7rem;
   display: flex;
   align-items: center;
