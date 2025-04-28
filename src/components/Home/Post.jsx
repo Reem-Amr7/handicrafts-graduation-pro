@@ -1,4 +1,3 @@
-// داخل Home.js
 import { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import styles from './Home.module.css';
@@ -23,7 +22,7 @@ export default function Home() {
     if (!token) return; // انتظر حتى يتم تحديث التوكن
 
     const fetchPosts = async () => {
-        try {
+        try {  
             const apiUrl = `https://ourheritage.runasp.net/api/Articles?PageIndex=${pageIndex}&PageSize=${pageSize}`;
             const response = await axios.get(apiUrl, {
                 headers: {
@@ -120,6 +119,7 @@ export default function Home() {
                     <Comment post={post} />
                     {/* <Watching /> */}
                   </div>
+                 
                   <div className="flex items-center gap-2 text-red-900 w-36">
                     <span className="mr-8">إعادة نشر</span>
                     <FaRedo />

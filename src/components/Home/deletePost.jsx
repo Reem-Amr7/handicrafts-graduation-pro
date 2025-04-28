@@ -9,7 +9,14 @@ export default function DeletePost({ postId }) {
   const [error, setError] = useState(null);
 
   const deletePost = async () => {
-   
+    // تأكيد الحذف
+    const confirmDelete = window.confirm("هل أنت متأكد أنك تريد حذف هذا المنشور؟");
+    if (!confirmDelete) return;  // إلغاء الحذف إذا لم يوافق المستخدم
+
+    if (!token) {
+      setError("يجب أن تكون مسجلاً للدخول لحذف المنشورات.");
+      return;
+    }
 
     try {
       const apiUrl = `https://ourheritage.runasp.net/api/Articles/${postId}`;
@@ -28,8 +35,8 @@ export default function DeletePost({ postId }) {
       console.error("❌ خطأ في حذف المنشور:", err);
       setError("حدث خطأ أثناء حذف المنشور. حاول مرة أخرى.");
     }
-
   };
+
   console.log("Post ID:", postId);
 
   return (

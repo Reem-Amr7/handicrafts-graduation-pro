@@ -3,8 +3,6 @@ import { TokenContext } from "../../Context/TokenContext";
 import React, { useState, useContext, useEffect } from "react";
 import styles from './Home.module.css';
 
-
-
 export default function NewPost() {
   const { token } = useContext(TokenContext);
   const [isFormVisible, setIsFormVisible] = useState(false);
@@ -82,9 +80,9 @@ export default function NewPost() {
   };
 
   return (
-    <div className={`mb-8 p-4 bg-white shadow-md rounded-lg  ${styles.leftside}`}>
+    <div className="create-post bg-white rounded shadow-md p-4 mb-6 border-t-4 border-[#A0522D]">
       <h2 className="text-right text-lg font-bold text-brown-700">إنشاء منشور جديد</h2>
-      
+
       <div className="mt-2">
         <input
           type="text"
@@ -98,17 +96,13 @@ export default function NewPost() {
         <div className={styles.modalBackdrop}>
           <div className={styles.modalContent}>
             <form onSubmit={handleSubmit} className="mt-4">
-            <input
+              <input
                 type="text"
                 name="title"
-                multiple
                 onChange={handleChange}
                 placeholder="العنوان"
                 className="w-full p-2 border border-gray-300 rounded-md mt-2 text-right"
                 value={postData.title}
-
-
-
               />
               <textarea
                 name="content"
@@ -133,15 +127,14 @@ export default function NewPost() {
                 onChange={handleChange}
                 className="w-full p-2 border border-gray-300 rounded-md mt-2 text-right"
               />
-              
               <div className="flex justify-between mt-3">
-                <button type="submit" className="bg-red-900 text-white px-4 py-2 ml-2 rounded-md shadow-md hover:bg-blue-700">
+                <button type="submit" className="bg-[#A0522D] text-white px-4 py-1 rounded-lg hover:bg-[#8B4513] transition text-sm">
                   نشر
                 </button>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="bg-gray-500 text-white px-4 py-2 rounded-md shadow-md hover:bg-gray-600"
-                  onClick={() => setIsFormVisible(false)} 
+                  onClick={() => setIsFormVisible(false)}
                 >
                   إلغاء
                 </button>

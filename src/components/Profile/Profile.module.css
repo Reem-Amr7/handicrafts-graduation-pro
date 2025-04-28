@@ -1,90 +1,273 @@
 .container {
-    display: flex;
-    /* flex-direction: row-reverse;  */
-    justify-content: flex-start; 
-    gap: 20px; /* المسافة بين العناصر */
-    background-color: #FFFCFC;
-    padding: 20px;
-  }
-  
-  .profileContainer {
-    background-size: cover;
-    background-position: center;
-    padding: 20px;
-    border-radius: 8px;
-    position: relative;
-    text-align: center;
-    color: white;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* إضافة ظل لتحسين الشكل */
-    height: 400px; /* ارتفاع ثابت للجزء الرئيسي */
-    /* margin-left: 100px; */
-    display: flex;
-    flex-direction:row;
-  }
-  
-  .profileContent {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    height: 100%; /* لجعل العنصر يأخذ ارتفاعًا كاملاً */
-  }
-  
-  .profileContent img {
-    width: 200px;
-    height: 200px;
-    border-radius: 50%;
-    border: 3px solid white;
-    /* align-self: flex-end;  */
-    margin-top: auto; 
-  }
-  .profileContent h2 {
-    margin: 25px 0;
-    font-size: 24px;
-    font-weight: bold; 
-    color: #6f5331; 
-  }
-  
-  .profileContent p {
-    margin: 5px 0;
-    font-size: 16px;
-    color: #c9b49d; 
-  }
-  
-  .stats {
-    display: flex;
-    justify-content: start;
-    gap: 80px; /* زيادة المسافة بين العناصر */
-    margin-top: 25px;
-    color: #4d3c26;
-  }
-  
-  .stats div {
-    text-align: center;
-  }
-  
-  .stats strong {
-    font-size: 20px;
-    font-weight: bold;
-    display: block; 
-  
-  }
-  
-  .stats p {
-    font-size: 19px;
-    margin: 5px 0 0;
-    color: #B18B5E;
-    font-weight: 400;
-  }
-  
-  .leftside {
-    background-color: #FFFCFC !important;
-    border-radius: 8px;
-    border: 2px solid #B18B5E;
-    padding: 20px;
-    height: 400px; /* ارتفاع ثابت للجزء الجانبي */
-  }
-.leftside img{
-    border-radius: 50%;
-    width: 35px;
-    height: 35px;
+  display: flex;
+  /* flex-direction: row-reverse;  */
+  justify-content: flex-start; 
+  gap: 20px; /* المسافة بين العناصر */
+  background-color: #FFFCFC;
+  padding: 20px;
 }
+
+.profileContainer {
+  background-size: cover;
+  background-position: center;
+  padding: 20px;
+  border-radius: 8px;
+  position: relative;
+  text-align: center;
+  color: white;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* إضافة ظل لتحسين الشكل */
+  height: 400px; /* ارتفاع ثابت للجزء الرئيسي */
+  /* margin-left: 100px; */
+  display: flex;
+  flex-direction:row;
+}
+
+.profileContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%; /* لجعل العنصر يأخذ ارتفاعًا كاملاً */
+}
+
+.profileContent img {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  border: 3px solid white;
+  /* align-self: flex-end;  */
+  margin-top: auto; 
+}
+.profileContent h2 {
+  margin: 25px 0;
+  font-size: 24px;
+  font-weight: bold; 
+  color: #6f5331; 
+}
+
+.profileContent p {
+  margin: 5px 0;
+  font-size: 16px;
+  color: #c9b49d; 
+}
+
+.stats {
+  display: flex;
+  justify-content: start;
+  gap: 80px; /* زيادة المسافة بين العناصر */
+  margin-top: 25px;
+  color: #4d3c26;
+}
+
+.stats div {
+  text-align: center;
+}
+
+.stats strong {
+  font-size: 20px;
+  font-weight: bold;
+  display: block; 
+
+}
+
+.stats p {
+  font-size: 19px;
+  margin: 5px 0 0;
+  color: #B18B5E;
+  font-weight: 400;
+}
+
+.leftside {
+  background-color: #FFFCFC !important;
+  border-radius: 8px;
+  border: 2px solid #B18B5E;
+  padding: 20px;
+  height: 400px; /* ارتفاع ثابت للجزء الجانبي */
+}
+.leftside img{
+  border-radius: 50%;
+  width: 35px;
+  height: 35px;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.profileContainer {
+position: relative;
+padding: 20px;
+background-color: #f7f7f7;
+border-radius: 12px;
+}
+
+.profileContent {
+text-align: center;
+position: relative;
+padding: 20px;
+}
+
+.profilePictureLabel {
+position: relative;
+display: inline-block;
+cursor: pointer;
+margin-top: 20px; 
+}
+
+.profilePicture {
+width: 120px;
+height: 120px;
+object-fit: cover;
+border-radius: 50%;
+border: 3px solid #ffffff;
+transition: all 0.3s ease;
+}
+
+/* .profilePicture:hover {
+transform: scale(1.1);
+} */
+
+h2 {
+margin-top: 15px;
+font-size: 1.5rem;
+font-weight: bold;
+}
+
+p {
+font-size: 1rem;
+color: #555;
+}
+
+.skillsSection {
+margin-top: 40px;
+padding: 20px;
+background-color: #fff;
+border-radius: 10px;
+box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.skillsSection h3 {
+font-size: 1.25rem;
+font-weight: bold;
+}
+
+.skillsSection form {
+display: flex;
+flex-direction: column;
+}
+
+.skillsSection input {
+padding: 12px;
+border: 1px solid #ddd;
+border-radius: 6px;
+margin-bottom: 10px;
+}
+
+.skillsSection button {
+padding: 12px;
+background-color: #007bff;
+color: white;
+border: none;
+border-radius: 6px;
+cursor: pointer;
+transition: background-color 0.3s ease;
+}
+
+.skillsSection button:hover {
+background-color: #0056b3;
+}
+
+.stats {
+margin-top: 40px;
+display: flex;
+justify-content: space-between;
+flex-wrap: wrap;
+}
+
+.stats div {
+flex: 1;
+margin: 10px;
+}
+
+.stats div p {
+font-size: 1rem;
+color: #555;
+}
+
+.postsSection {
+margin-top: 40px;
+}
+
+.postsSection h3 {
+font-size: 1.25rem;
+font-weight: bold;
+margin-bottom: 20px;
+}
+
+.postsSection .mb-8 {
+margin-bottom: 20px;
+}
+
+
+.postsSection .flex {
+display: flex;
+justify-content: space-between;
+align-items: center;
+}
+
+.postsSection .flex a {
+color: #007bff;
+}
+
+.postsSection .flex a:hover {
+text-decoration: underline;
+}
+
+.profileContent {
+text-align: center;
+position: relative;
+padding: 20px;
+}
+
+.profilePictureLabel {
+position: relative;
+display: inline-block;
+cursor: pointer;
+margin-bottom: 20px; 
+}
+
+.profilePicture {
+width: 120px;
+height: 120px;
+object-fit: cover;
+border-radius: 50%;
+border: 3px solid #ffffff;
+transition: all 0.3s ease;
+}
+/* 
+.profilePicture:hover {
+transform: scale(1.1);
+} */
+
+h2 {
+margin-top: 10px; 
+font-size: 1.5rem;
+font-weight: bold;
+}
+
+p {
+font-size: 1rem;
+color: #555;
+margin-top: 5px; 
+} 

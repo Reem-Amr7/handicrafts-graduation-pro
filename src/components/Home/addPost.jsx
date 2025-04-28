@@ -29,10 +29,7 @@ export default function AddPost() {
     e.preventDefault();
     const userId = localStorage.getItem("userId");
 
-    // if (!formData.title || !formData.content || !formData.categoryId || !formData.imageUrl) {
-    //   setErrorMessage('يرجى تعبئة جميع الحقول المطلوبة');
-    //   return;
-    // }
+
 
     if (!token) {
       setErrorMessage('لم يتم العثور على التوكن، يرجى تسجيل الدخول');
@@ -106,7 +103,7 @@ export default function AddPost() {
               onClick={() => setShowModal(false)}
               className="absolute top-2 right-4 text-gray-600 text-2xl"
             >
-              ×
+              
             </button>
             <h3 className="mb-4 text-center text-lg font-semibold">إضافة منشور</h3>
             

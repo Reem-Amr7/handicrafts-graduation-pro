@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { FaEllipsisH } from "react-icons/fa";
 import styles from './Home.module.css';
@@ -11,6 +10,7 @@ export default function PostSettings({post,setPosts}) {
   const handleShowList = () => {
     setIsListOpen(!isListOpen);
   };
+
   const hidePost = () => {
     setPosts(prevPosts =>
       prevPosts.map(p =>
@@ -30,9 +30,10 @@ export default function PostSettings({post,setPosts}) {
 
       {isListOpen && (
         <div 
-  className="absolute right-0shadow-lg mt-2 p-2 w-48" 
-  style={{ border: '2px solid #B18B5E', backgroundColor: '#FFFCFC' }}
->          <div className="cursor-pointer hover:bg-gray-100 p-2">
+          className="absolute right-0 shadow-lg mt-2 p-2 w-48" 
+          style={{ border: '2px solid #B18B5E', backgroundColor: '#FFFCFC' }}
+        >
+          <div className="cursor-pointer hover:bg-gray-100 p-2">
             <p className="font-semibold ">تعديل المنشور</p>
             <p className="text-sm text-gray-500">يمكنك تعديل هذا المنشور خلال ساعة</p>
           </div>
@@ -41,7 +42,6 @@ export default function PostSettings({post,setPosts}) {
             <p className="text-sm text-gray-500">إخفاء هذا المنشور</p>
           </div>
           <DeletePost postId={post.id} />
-         
         </div>
       )}
     </div>

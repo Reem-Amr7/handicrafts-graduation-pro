@@ -8,14 +8,33 @@
 
   
 }
+:root {
+  --primary: #8B4513; /* Brown (لون الطوب) */
+  --secondary: #CD7F32; /* Bronze (النحاسي) */
+  --accent: #6B8E23; /* Olive (الزيتوني) */
+  --text: #5C4033; /* Dark brown for text */
+  --light: #F5F5DC; /* Beige (لون خفيف تراثي) */
+  --light:#fcfcfb;
 
+  --dark: #5C4033; /* Dark brown */
+  --white: #fff;
+  --red-brick: #B22222; /* الأحمر الطوبي */
+  
+  --shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  --transition: all 0.3s ease;
+  --primary: #8B4513; /* بني خشبي */
+  --secondary: #D2B48C; /* بني فاتح */
+  --accent: #A0522D; /* بني محروق */
+  --gold: #D4AF37;
+}
 .topBar {
   display: flex;
   padding: 0.5rem;
   font-size: 0.875rem;
   justify-content: flex-start; 
-  padding-left: 7rem; 
-
+  padding-left: 7rem;
+  background: linear-gradient(90deg, var(--primary), var(--gold), var(--secondary)) !important; 
+height: 25px;
 }
 
 .nav {
