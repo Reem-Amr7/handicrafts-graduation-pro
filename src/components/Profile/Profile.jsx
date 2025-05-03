@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import axios from 'axios';
+import { FaCalendarAlt, FaThumbsUp, FaComment, FaShare, FaRedo, FaEllipsisH, FaBars } from "react-icons/fa";
 import styles from "./Profile.module.css";
 import ProfileLeftside from './ProfileLeftside';
-import axios from 'axios';
-import { FaCalendarAlt, FaThumbsUp, FaComment, FaShare, FaRedo } from "react-icons/fa";
 import NewPost from '../Home/newpost';
 import PostSettings from '../Home/postSetting';
 
 export default function Profile() {
+  const { id } = useParams();
   const [userData, setUserData] = useState(null);
   const [userPosts, setUserPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -15,80 +17,83 @@ export default function Profile() {
   const [userSkills, setUserSkills] = useState([]);
   const [profilePicture, setProfilePicture] = useState(null);
   const [coverImage, setCoverImage] = useState(null);
-
-  // Retrieve current userId and token
-  const userId = localStorage.getItem("userId");
+  const [followers, setFollowers] = useState(0); 
+  const [following, setFollowing] = useState(0);
   const token = localStorage.getItem("userToken");
+  const currentUserId = localStorage.getItem("userId");
 
-  // Keys for per-user storage
-  const picKey = `profilePicture_${userId}`;
-  const coverKey = `coverImage_${userId}`;
+  const picKey = `profilePicture_${id}`;
+  const coverKey = `coverImage_${id}`;
 
   useEffect(() => {
-    if (!userId || !token) {
+    if (!id || !token) {
       setError("لم يتم العثور على بيانات المستخدم. تأكد من تسجيل الدخول.");
       setLoading(false);
       return;
     }
 
-    const fetchUserData = async () => {
+    const fetchData = async () => {
       try {
-        const res = await axios.get(
-          `https://ourheritage.runasp.net/api/Users/${userId}`,
+        const userRes = await axios.get(
+          `https://ourheritage.runasp.net/api/Users/${id}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        setUserData(res.data);
-        setUserSkills(res.data.skills || []);
-      } catch (err) {
-        console.error(err);
-        setError(err.response?.status === 401
-          ? "خطأ 401: غير مصرح بالوصول. تأكد من تسجيل الدخول."
-          : "حدث خطأ أثناء جلب البيانات. تحقق من الاتصال وصلاحيات الوصول.");
-      }
-    };
 
-    const fetchUserPosts = async () => {
-      try {
-        const res = await axios.get(
+        const postsRes = await axios.get(
           `https://ourheritage.runasp.net/api/Articles`,
           {
             headers: { Authorization: `Bearer ${token}` },
-            params: { PageIndex: 1, PageSize: 100 }
+            params: {
+              PageIndex: 1,
+              PageSize: 100,
+              UserId: id
+            }
           }
         );
-        if (Array.isArray(res.data.items)) {
-          setUserPosts(res.data.items.filter(p => p.userId == userId));
+
+        setUserData(userRes.data);
+        setUserSkills(userRes.data.skills || []);
+        setFollowers(userRes.data.followers || 0); 
+        setFollowing(userRes.data.following || 0); 
+
+        if (Array.isArray(postsRes.data.items)) {
+          setUserPosts(postsRes.data.items.filter(p => p.userId == id));
         }
+
+        const storedPic = localStorage.getItem(picKey);
+        if (storedPic) setProfilePicture(storedPic);
+        const storedCover = localStorage.getItem(coverKey);
+        if (storedCover) setCoverImage(storedCover);
+
       } catch (err) {
         console.error(err);
-        setError("حدث خطأ أثناء جلب البوستات. تحقق من الاتصال.");
+        setError("حدث خطأ أثناء جلب البيانات");
+      } finally {
+        setLoading(false);
       }
     };
 
-    const load = async () => {
-      await Promise.all([fetchUserData(), fetchUserPosts()]);
-      setLoading(false);
-    };
-    load();
-  }, [userId, token]);
+    fetchData();
+  }, [id, token]);
 
-  // Load stored images for this user
   useEffect(() => {
-    if (userId) {
+    if (id) {
       const storedPic = localStorage.getItem(picKey);
       if (storedPic) setProfilePicture(storedPic);
       const storedCover = localStorage.getItem(coverKey);
       if (storedCover) setCoverImage(storedCover);
     }
-  }, [userId]);
+  }, [id]);
 
   const handleProfilePictureChange = e => {
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onloadend = () => {
-      localStorage.setItem(picKey, reader.result);
-      setProfilePicture(reader.result);
+      if (reader.result !== profilePicture) {
+        localStorage.setItem(picKey, reader.result);
+        setProfilePicture(reader.result);
+      }
     };
     reader.readAsDataURL(file);
   };
@@ -98,23 +103,47 @@ export default function Profile() {
     if (!file) return;
     const reader = new FileReader();
     reader.onloadend = () => {
-      localStorage.setItem(coverKey, reader.result);
-      setCoverImage(reader.result);
+      if (reader.result !== coverImage) {
+        localStorage.setItem(coverKey, reader.result);
+        setCoverImage(reader.result);
+      }
     };
     reader.readAsDataURL(file);
   };
 
-  const handleAddSkills = async e => {
+  const handleCoverClick = (e) => {
+    e.stopPropagation();
+    if (id === currentUserId) {
+      const input = document.getElementById("coverImageInput");
+      if (input) {
+        input.click();
+      } else {
+        console.error("Input element not found");
+      }
+    }
+  };
+
+  const handleAddSkills = async (e) => {
     e.preventDefault();
     if (!newSkill) return setError("يجب إدخال مهارة.");
-    const updated = [...userSkills, newSkill];
-    setUserSkills(updated);
+  
+    const updatedSkills = [...userSkills, newSkill];
+    setUserSkills(updatedSkills);
+  
     try {
       await axios.put(
-        `https://ourheritage.runasp.net/api/Users/${userId}`,
-        { skills: updated },
-        { headers: { Authorization: `Bearer ${token}` } }
+        `https://ourheritage.runasp.net/api/Users/${id}`,
+        {
+          skills: updatedSkills,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        }
       );
+  
       setNewSkill("");
       setError(null);
     } catch (err) {
@@ -123,59 +152,97 @@ export default function Profile() {
     }
   };
 
-  const handleCoverClick = () => document.getElementById("coverImageInput").click();
-
-  if (loading) return <p>جاري تحميل البيانات...</p>;
-  if (error) return <p className="text-red-600">{error}</p>;
+  if (loading) return <p className="text-center py-8">جاري تحميل البيانات...</p>;
+  if (error) return <p className="text-red-600 text-center py-8">{error}</p>;
+  if (!userData) return <p className="text-center py-8">لا يوجد بيانات</p>;
 
   return (
     <div className={styles.container}>
       <div className="grid grid-cols-12 gap-4 p-4">
-        <div className="col-span-9">
-          <div className={styles.coverContainer} onClick={handleCoverClick}>
+        <div className="col-span-12 md:col-span-9">
+          {/* Cover Image Section */}
+          <div
+            className={`${styles.coverContainer} ${id === currentUserId ? styles.editableCover : ''}`}
+            onClick={handleCoverClick}
+            style={{
+              backgroundImage: `url(${coverImage || userData.coverImage || ''})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              position: 'relative',
+              paddingBottom: '120px'
+            }}
+          >
             <input
               type="file"
               id="coverImageInput"
-              style={{ display:'none' }}
+              style={{
+                display: 'none',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                opacity: 0,
+                cursor: 'pointer'
+              }}
               accept="image/*"
               onChange={handleCoverImageChange}
             />
-          </div>
+            {id === currentUserId && (
+              <div className={styles.coverEditOverlay}>
+                <span>تغيير صورة الغلاف</span>
+              </div>
+            )}
 
-          <div
-            className={styles.profileContainer}
-            style={{
-              backgroundImage: `url(${coverImage||''})`,
-              backgroundSize:'cover',
-              backgroundPosition:'center'
-            }}
-            onClick={handleCoverClick}
-          >
-            <div className={styles.profileContent}>
+            {/* Profile Info Section (Left) */}
+            <div className={styles.profileInfo} style={{ position: 'absolute', bottom: '10px', left: '10px', padding: '10px', borderRadius: '10px', right: '10px' }}>
               <div className={styles.profilePictureLabel}>
                 <img
-                  src={profilePicture||"https://via.placeholder.com/150"}
+                  src={profilePicture || userData.profilePicture || "https://via.placeholder.com/150"}
                   alt="Profile"
-                  className={`${styles.profilePicture} cursor-pointer`}
-                  onClick={() => document.getElementById("profilePictureInput").click()}
+                  className={`${styles.profilePicture} ${id === currentUserId ? styles.editableProfile : ''}`}
+                  onClick={() => {
+                    if (id === currentUserId) {
+                      document.getElementById("profilePictureInput").click();
+                    }
+                  }}
                 />
                 <input
                   type="file"
                   id="profilePictureInput"
-                  style={{ display:'none' }}
+                  style={{ display: 'none' }}
                   accept="image/*"
                   onChange={handleProfilePictureChange}
                 />
               </div>
-              <h2>{userData.fullName}</h2>
-              <p>رقم الهاتف: {userData.phone||"غير متوفر"}</p>
+              <h2 className="text-white">{userData.fullName || `${userData.firstName} ${userData.lastName}`}</h2>
+              <p className="text-white">رقم الهاتف: {userData.phone || "غير متوفر"}</p>
             </div>
           </div>
+          <form onSubmit={handleAddSkills}>
+            <input 
+              type="text" 
+              value={newSkill} 
+              onChange={(e) => setNewSkill(e.target.value)} 
+              placeholder="أدخل مهارة جديدة" 
+              className="mb-2 p-2 border border-gray-300 rounded"
+            />
+            <button type="submit" className="px-4 py-2 bg-blue-500 text-white rounded">إضافة مهارة</button>
+          </form>
 
+          {/* Stats Section */}
           <div className={styles.stats}>
             <div>
               <strong>المهارات:</strong>
               <p>{userSkills.length ? userSkills.join(", ") : "لا توجد"}</p>
+            </div>
+            <div>
+              <strong>متابع:</strong>
+              <p>{followers}</p>
+            </div>
+            <div>
+              <strong>اتابع:</strong>
+              <p>{following}</p>
             </div>
             <div>
               <strong>تاريخ الانضمام:</strong>
@@ -183,43 +250,62 @@ export default function Profile() {
             </div>
           </div>
 
-          <NewPost />
+          {/* New Post */}
+          {id === currentUserId && <NewPost />}
 
+          {/* Posts Section */}
           <div className={styles.postsSection}>
             <h3 className="text-xl font-bold mb-4">منشورات المستخدم</h3>
-            {userPosts.length ? userPosts.map(post => (
+            {userPosts.length > 0 ? userPosts.map(post => (
               <div key={post.id} className="mb-8 p-4 bg-white shadow-md rounded-lg">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <img
-                      src={profilePicture||"https://via.placeholder.com/50"}
-                      alt=""
-                      className="w-12 h-12 border-2 border-red-900 rounded-full"
-                    />
-                    <div>
-                      <p className="font-bold text-red-800">{userData.fullName}</p>
-                      <div className="flex items-center text-gray-600 text-sm gap-1">
-                        <FaCalendarAlt />
-                        <span>{new Date(post.dateCreated).toLocaleDateString()}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <PostSettings post={post} setUserPosts={setUserPosts} />
+                <div className="flex justify-between items-center mb-1">
+                  <div className='setting'> </div>
+                  {id === currentUserId && (
+                    <PostSettings post={post} setUserPosts={setUserPosts} />
+                  )}
                 </div>
+
+                <div className="flex items-center gap-2 mb-4">
+                  <img
+                    src={profilePicture || userData.profilePicture || "https://via.placeholder.com/50"}
+                    alt="User"
+                    className="w-12 h-12 border-2 border-red-900 rounded-full"
+                  />
+                  <div>
+                    <p className="font-bold text-red-800">
+                      {userData.fullName || `${userData.firstName} ${userData.lastName}`}
+                    </p>
+                  </div>
+                </div>
+
                 {post.imageURL && (
                   <div className="w-full h-96 rounded-md mb-4">
-                    <img src={post.imageURL} alt="Post" className="w-full h-full object-cover rounded-md"/>
+                    <img
+                      src={post.imageURL}
+                      alt="Post"
+                      className="w-full h-full object-cover rounded-md"
+                    />
                   </div>
                 )}
+
                 <h4 className="text-lg font-bold mb-2">{post.title || "بدون عنوان"}</h4>
                 <p className="border-b-2 border-black pb-2 mb-2">{post.content || "بدون محتوى"}</p>
+
                 <div className="flex justify-between items-center mt-4 text-red-900">
                   <div className="flex gap-8 items-center">
-                    <div className="flex items-center gap-1 cursor-pointer"><FaThumbsUp /><span>إعجاب</span></div>
-                    <div className="flex items-center gap-1 cursor-pointer"><FaComment /><span>تعليق</span></div>
-                    <div className="flex items-center gap-1 cursor-pointer"><FaShare /><span>مشاركة</span></div>
+                    <div className="flex items-center gap-1 cursor-pointer">
+                      <FaThumbsUp /><span>إعجاب</span>
+                    </div>
+                    <div className="flex items-center gap-1 cursor-pointer">
+                      <FaComment /><span>تعليق</span>
+                    </div>
+                    <div className="flex items-center gap-1 cursor-pointer">
+                      <FaShare /><span>مشاركة</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 cursor-pointer"><span>إعادة نشر</span><FaRedo /></div>
+                  <div className="flex items-center gap-2 cursor-pointer">
+                    <span>إعادة نشر</span><FaRedo />
+                  </div>
                 </div>
               </div>
             )) : (
@@ -227,7 +313,9 @@ export default function Profile() {
             )}
           </div>
         </div>
-        <div className="col-span-3"><ProfileLeftside /></div>
+        <div className="col-span-12 md:col-span-3">
+          <ProfileLeftside />
+        </div>
       </div>
     </div>
   );

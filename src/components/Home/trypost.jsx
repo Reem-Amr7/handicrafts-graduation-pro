@@ -2,11 +2,11 @@ import { useState, useEffect, useContext } from "react";
 import axios from "axios";
 import { FaHeart, FaCalendarAlt, FaComment, FaShareAlt, FaSort, FaTimes } from "react-icons/fa";
 import { TokenContext } from "../../Context/TokenContext";
+import { useNavigate } from "react-router-dom";
 import styles from './Home.module.css';
 import Comment from "./comment";
 import PostSettings from "./postSetting";
 import Like from "./like";
-import { useNavigate } from "react-router-dom";
 import profileimage from '../../assets/OIP (1).jpg';
 
 export default function Posty() {
@@ -16,6 +16,7 @@ export default function Posty() {
     const [openComments, setOpenComments] = useState({});
     const [sortOption, setSortOption] = useState("الأحدث");
     const [selectedPost, setSelectedPost] = useState(null);
+    const navigate = useNavigate();  // استخدم useNavigate لتوجيه المستخدم
 
     useEffect(() => {
         if (!token) return;
@@ -67,6 +68,10 @@ export default function Posty() {
         return 0;
     });
 
+    const goToProfile = (userId) => {
+        navigate(`/profile/${userId}`);  // التوجيه إلى صفحة البروفايل باستخدام المعرف
+    };
+
     if (error) {
         return <p className="text-center text-red-600 mt-5">{error}</p>;
     }
@@ -97,7 +102,8 @@ export default function Posty() {
                     <div className="post-header flex items-center mb-3">
                         <img
                             src={post.userProfilePicture || profileimage}
-                            className="w-10 h-10 border-2 border-red-900 rounded-full"
+                            className="w-10 h-10 border-2 border-red-900 rounded-full cursor-pointer"
+                            onClick={() => goToProfile(post.userId)}  // عند الضغط على الصورة يتم التوجيه إلى صفحة البروفايل
                         />
                         <div className="post-author-info mt-2 mr-3 flex-1">
                             <h3 className="post-author-name font-normal text-[#5C4033] text-lg flex items-center">
@@ -115,17 +121,16 @@ export default function Posty() {
 
                     <div className="post-content mb-3 text-base leading-relaxed">
                         <p className="whitespace-pre-line">{post.content}</p>
+
                         {post.imageURL?.length > 0 && (
-                            <div className="post-img-container mb-3 rounded overflow-hidden  h-96">
-  <img
-    src={post.imageURL[0]}
-    alt="صورة المنشور"
-    className="w-full h-full object-cover cursor-pointer transition hover:scale-105"
-    onClick={() => setSelectedPost(post)} // فتح المودال عند النقر
-  />
-</div>
-
-
+                            <div className="post-img-container mb-3 rounded overflow-hidden">
+                                <img
+                                    src={post.imageURL[0]}
+                                    alt="صورة المنشور"
+                                    className="w-full max-h-96 object-cover cursor-pointer transition hover:scale-105"
+                                    onClick={() => setSelectedPost(post)}
+                                />
+                            </div>
                         )}
                     </div>
 
@@ -143,59 +148,55 @@ export default function Posty() {
                             <FaShareAlt className="ml-1 text-gray-500" />
                         </div>
                     </div>
-                    
 
                     {openComments[post.id] && <Comment post={post} />}
                 </div>
             ))}
 
             {selectedPost && (
-   <div
-   className="fixed inset-0 bg-[#f5f5dc] bg-opacity-60 flex justify-center items-center z-50"
-   onClick={() => setSelectedPost(null)}
->
-        <div
-            className="bg-white w-[90%] h-[90%] md:flex rounded-lg overflow-hidden relative shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-        >
-            <span
-                className="absolute top-4 left-4 text-gray-400 hover:text-gray-700 text-2xl"
-                onClick={() => setSelectedPost(null)}
-            >
-                <FaTimes />
-            </span>
+                <div
+                    className="fixed inset-0 bg-[#f5f5dc] bg-opacity-60 flex justify-center items-center z-50"
+                    onClick={() => setSelectedPost(null)}
+                >
+                    <div
+                        className="bg-white w-[90%] h-[90%] md:flex rounded-lg overflow-hidden relative shadow-2xl"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <span
+                            className="absolute top-4 left-4 text-gray-400 hover:text-gray-700 text-2xl"
+                            onClick={() => setSelectedPost(null)}
+                        >
+                            <FaTimes />
+                        </span>
 
-            <div className="w-full md:w-1/2 h-1/2 md:h-full bg-black flex items-center justify-center">
-                <img
-                    src={selectedPost.imageURL?.[0]}
-                    alt="صورة البوست"
-                    className="object-contain w-full h-full"
-                />
-            </div>
+                        <div className="w-full md:w-1/2 h-1/2 md:h-full bg-black flex items-center justify-center">
+                            <img
+                                src={selectedPost.imageURL?.[0]}
+                                alt="صورة البوست"
+                                className="object-contain w-full h-full"
+                            />
+                        </div>
 
-            <div className="w-full md:w-1/2 h-1/2 md:h-full p-6 overflow-y-auto bg-white">
-                <div className="flex items-center mb-4">
-                    <img
-                        src={selectedPost.userProfilePicture || profileimage
-                        }
-                        alt="مستخدم"
-                        className="w-10 h-10 rounded-full border-2 border-red-800"
-                    />
-                    <div className="mr-3">
-                        <h3 className="text-[#5C4033] font-semibold">{selectedPost.nameOfUser}</h3>
-                        <p className="text-xs text-gray-500">{selectedPost.timeAgo}</p>
+                        <div className="w-full md:w-1/2 h-1/2 md:h-full p-6 overflow-y-auto bg-white">
+                            <div className="flex items-center mb-4">
+                                <img
+                                    src={selectedPost.userProfilePicture || profileimage}
+                                    alt="مستخدم"
+                                    className="w-10 h-10 rounded-full border-2 border-red-800"
+                                />
+                                <div className="mr-3">
+                                    <h3 className="text-[#5C4033] font-semibold">{selectedPost.nameOfUser}</h3>
+                                    <p className="text-xs text-gray-500">{selectedPost.timeAgo}</p>
+                                </div>
+                            </div>
+
+                            <p className="text-[#5C4033] mb-4">{selectedPost.content}</p>
+
+                            <Comment post={selectedPost} />
+                        </div>
                     </div>
                 </div>
-
-                <p className="text-[#5C4033] mb-4">{selectedPost.content}</p>
-
-                <Comment post={selectedPost} />
-            </div>
-        </div>
-    </div>
-)}
-
-
+            )}
         </div>
     );
 }

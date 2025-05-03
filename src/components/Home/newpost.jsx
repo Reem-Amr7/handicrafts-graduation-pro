@@ -9,11 +9,9 @@ export default function NewPost() {
   const [postData, setPostData] = useState({
     title: "",
     content: "",
-    images: [],
-    imageUrl: "",
+    images: null,   // <-- لاحظي هنا الصور تبتدي null مش مصفوفة
     categoryId: "",
     userId: "",
-    dateCreated: "",
   });
 
   useEffect(() => {
@@ -37,7 +35,7 @@ export default function NewPost() {
         }
       );
       console.log("Post created successfully:", res.data);
-      setIsFormVisible(false); 
+      setIsFormVisible(false);
     } catch (error) {
       console.error("Error creating post:", error.response?.data || error);
     }
@@ -48,7 +46,7 @@ export default function NewPost() {
     if (type === "file") {
       setPostData((prev) => ({
         ...prev,
-        [name]: [...files],
+        [name]: files.length > 0 ? files : null,
       }));
     } else {
       setPostData((prev) => ({ ...prev, [name]: value }));
@@ -61,20 +59,18 @@ export default function NewPost() {
 
     formData.append("Title", postData.title);
     formData.append("Content", postData.content);
+    formData.append("UserId", postData.userId);
 
-    if (postData.images.length > 0) {
-      postData.images.forEach((image) => {
-        formData.append("Images", image);
-      });
+    if (postData.categoryId) {
+      formData.append("CategoryId", postData.categoryId);
     }
 
-    if (postData.imageUrl) {
-      formData.append("ImageURL", postData.imageUrl);
+    // ✨ فقط لو فيه صور، نضيفها
+    if (postData.images) {
+      for (let i = 0; i < postData.images.length; i++) {
+        formData.append("Images", postData.images[i]);
+      }
     }
-
-    if (postData.categoryId) formData.append("CategoryId", postData.categoryId);
-    if (postData.userId) formData.append("UserId", postData.userId);
-    if (postData.dateCreated) formData.append("DateCreated", postData.dateCreated);
 
     await addNewPost(formData);
   };
@@ -86,9 +82,10 @@ export default function NewPost() {
       <div className="mt-2">
         <input
           type="text"
-          placeholder="إنشاء منشور جديد"
+          placeholder="اضغط هنا لكتابة منشور..."
           className="w-full p-2 border border-gray-300 rounded-md focus:outline-none text-right cursor-pointer"
           onClick={() => setIsFormVisible(true)}
+          readOnly
         />
       </div>
 
@@ -99,41 +96,51 @@ export default function NewPost() {
               <input
                 type="text"
                 name="title"
-                onChange={handleChange}
-                placeholder="العنوان"
-                className="w-full p-2 border border-gray-300 rounded-md mt-2 text-right"
+                placeholder="العنوان (اختياري)"
                 value={postData.title}
+                onChange={handleChange}
+                className="w-full p-2 border border-gray-300 rounded-md mt-2 text-right"
               />
+
               <textarea
                 name="content"
                 placeholder="ماذا يدور في بالك؟"
                 value={postData.content}
                 onChange={handleChange}
                 required
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none text-right"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none text-right mt-2"
               />
-              <input
-                type="file"
-                name="images"
-                multiple
-                onChange={handleChange}
-                className="mt-2"
-              />
+
+              <div className="mt-2">
+                <label className="block text-gray-600 text-sm mb-1 text-right">رفع صورة (اختياري):</label>
+                <input
+                  type="file"
+                  name="images"
+                  multiple
+                  onChange={handleChange}
+                  className="w-full"
+                />
+              </div>
+
               <input
                 type="text"
                 name="categoryId"
-                placeholder="معرف الفئة"
+                placeholder="معرف الفئة (اختياري)"
                 value={postData.categoryId}
                 onChange={handleChange}
                 className="w-full p-2 border border-gray-300 rounded-md mt-2 text-right"
               />
-              <div className="flex justify-between mt-3">
-                <button type="submit" className="bg-[#A0522D] text-white px-4 py-1 rounded-lg hover:bg-[#8B4513] transition text-sm">
+
+              <div className="flex justify-between mt-4">
+                <button
+                  type="submit"
+                  className="bg-[#A0522D] text-white px-4 py-2 rounded-lg hover:bg-[#8B4513] transition text-sm"
+                >
                   نشر
                 </button>
                 <button
                   type="button"
-                  className="bg-gray-500 text-white px-4 py-2 rounded-md shadow-md hover:bg-gray-600"
+                  className="bg-gray-500 text-white px-4 py-2 rounded-md shadow-md hover:bg-gray-600 text-sm"
                   onClick={() => setIsFormVisible(false)}
                 >
                   إلغاء
