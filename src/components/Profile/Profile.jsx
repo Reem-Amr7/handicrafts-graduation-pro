@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect,useContext } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import { FaCalendarAlt, FaThumbsUp, FaComment, FaShare, FaRedo, FaEllipsisH, FaBars } from "react-icons/fa";
@@ -6,6 +6,7 @@ import styles from "./Profile.module.css";
 import ProfileLeftside from './ProfileLeftside';
 import NewPost from '../Home/newpost';
 import PostSettings from '../Home/postSetting';
+import { TokenContext } from "../../Context/TokenContext";
 
 export default function Profile() {
   const { id } = useParams();
@@ -19,7 +20,7 @@ export default function Profile() {
   const [coverImage, setCoverImage] = useState(null);
   const [followers, setFollowers] = useState(0); 
   const [following, setFollowing] = useState(0);
-  const token = localStorage.getItem("userToken");
+    const { token } = useContext(TokenContext);
   const currentUserId = localStorage.getItem("userId");
 
   const picKey = `profilePicture_${id}`;
@@ -52,7 +53,7 @@ export default function Profile() {
         );
 
         setUserData(userRes.data);
-        setUserSkills(userRes.data.skills || []);
+        setUserSkills(userRes.data.skills || []); // Set skills from user data
         setFollowers(userRes.data.followers || 0); 
         setFollowing(userRes.data.following || 0); 
 
@@ -76,14 +77,30 @@ export default function Profile() {
     fetchData();
   }, [id, token]);
 
+  // Fetch skills on page load or when token changes
   useEffect(() => {
-    if (id) {
-      const storedPic = localStorage.getItem(picKey);
-      if (storedPic) setProfilePicture(storedPic);
-      const storedCover = localStorage.getItem(coverKey);
-      if (storedCover) setCoverImage(storedCover);
+    if (!token) {
+      setError("لم يتم العثور على التوكن. تأكد من تسجيل الدخول.");
+      return;
     }
-  }, [id]);
+
+    const fetchSkills = async () => {
+      try {
+        const response = await axios.get('https://ourheritage.runasp.net/api/Users/me/skills', {
+          headers: {
+            Authorization: `Bearer ${token}` // Ensure token is included
+          }
+        });
+
+        setUserSkills(response.data);  // Set fetched skills
+      } catch (err) {
+        console.error(err);
+        setError("حدث خطأ أثناء جلب المهارات.");
+      }
+    };
+
+    fetchSkills();
+  }, [token]);
 
   const handleProfilePictureChange = e => {
     const file = e.target.files[0];
@@ -126,31 +143,30 @@ export default function Profile() {
   const handleAddSkills = async (e) => {
     e.preventDefault();
     if (!newSkill) return setError("يجب إدخال مهارة.");
-  
+    
     const updatedSkills = [...userSkills, newSkill];
     setUserSkills(updatedSkills);
-  
+    
     try {
-      await axios.put(
-        `https://ourheritage.runasp.net/api/Users/${id}`,
-        {
-          skills: updatedSkills,
-        },
+      await axios.post(
+        `https://ourheritage.runasp.net/api/Users/skills`,
+        newSkill,  // Send the raw skill string
         {
           headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${token}`, // Make sure the token is correct
+            'Content-Type': 'application/json', // Ensure correct content type
           },
         }
       );
   
-      setNewSkill("");
-      setError(null);
+      setNewSkill("");  // Clear the input field
+      setError(null);   // Clear any previous errors
     } catch (err) {
       console.error(err);
       setError("حدث خطأ أثناء إضافة المهارة.");
     }
   };
+  
 
   if (loading) return <p className="text-center py-8">جاري تحميل البيانات...</p>;
   if (error) return <p className="text-red-600 text-center py-8">{error}</p>;
@@ -255,66 +271,67 @@ export default function Profile() {
 
           {/* Posts Section */}
           <div className={styles.postsSection}>
-            <h3 className="text-xl font-bold mb-4">منشورات المستخدم</h3>
-            {userPosts.length > 0 ? userPosts.map(post => (
-              <div key={post.id} className="mb-8 p-4 bg-white shadow-md rounded-lg">
-                <div className="flex justify-between items-center mb-1">
-                  <div className='setting'> </div>
-                  {id === currentUserId && (
-                    <PostSettings post={post} setUserPosts={setUserPosts} />
-                  )}
-                </div>
+  <h3 className="text-xl font-bold mb-4">منشورات المستخدم</h3>
+  {userPosts.length > 0 ? userPosts.map(post => (
+    <div key={post.id} className="mb-8 p-4 bg-white shadow-md rounded-lg">
+      <div className="flex justify-between items-center mb-1">
+        <div className="setting"></div>
+        {id === currentUserId && (
+          <PostSettings post={post} setUserPosts={setUserPosts} />
+        )}
+      </div>
 
-                <div className="flex items-center gap-2 mb-4">
-                  <img
-                    src={profilePicture || userData.profilePicture || "https://via.placeholder.com/50"}
-                    alt="User"
-                    className="w-12 h-12 border-2 border-red-900 rounded-full"
-                  />
-                  <div>
-                    <p className="font-bold text-red-800">
-                      {userData.fullName || `${userData.firstName} ${userData.lastName}`}
-                    </p>
-                  </div>
-                </div>
+      <div className="flex items-center gap-2 mb-4">
+        <img
+          src={profilePicture || userData.profilePicture || "https://via.placeholder.com/50"}
+          alt="User"
+          className="w-12 h-12 border-2 border-red-900 rounded-full"
+        />
+        <div>
+          <p className="font-bold text-red-800">
+            {userData.fullName || `${userData.firstName} ${userData.lastName}`}
+          </p>
+        </div>
+      </div>
 
-                {post.imageURL && (
-                  <div className="w-full h-96 rounded-md mb-4">
-                    <img
-                      src={post.imageURL}
-                      alt="Post"
-                      className="w-full h-full object-cover rounded-md"
-                    />
-                  </div>
-                )}
+      {post.imageURL && (
+        <div className="w-full h-96 rounded-md mb-4">
+          <img
+            src={post.imageURL}
+            alt="Post"
+            className="w-full h-full object-cover rounded-md"
+          />
+        </div>
+      )}
 
-                <h4 className="text-lg font-bold mb-2">{post.title || "بدون عنوان"}</h4>
-                <p className="border-b-2 border-black pb-2 mb-2">{post.content || "بدون محتوى"}</p>
+      <h4 className="text-lg font-bold mb-2">{post.title || "بدون عنوان"}</h4>
+      <p className="border-b-2 border-black pb-2 mb-2">{post.content || "بدون محتوى"}</p>
 
-                <div className="flex justify-between items-center mt-4 text-red-900">
-                  <div className="flex gap-8 items-center">
-                    <div className="flex items-center gap-1 cursor-pointer">
-                      <FaThumbsUp /><span>إعجاب</span>
-                    </div>
-                    <div className="flex items-center gap-1 cursor-pointer">
-                      <FaComment /><span>تعليق</span>
-                    </div>
-                    <div className="flex items-center gap-1 cursor-pointer">
-                      <FaShare /><span>مشاركة</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 cursor-pointer">
-                    <span>إعادة نشر</span><FaRedo />
-                  </div>
-                </div>
-              </div>
-            )) : (
-              <p>لا توجد منشورات.</p>
-            )}
+      <div className="flex justify-between items-center mt-4 text-red-900">
+        <div className="flex gap-8 items-center">
+          <div className="flex items-center gap-1 cursor-pointer">
+            <FaThumbsUp /><span>إعجاب</span>
+          </div>
+          <div className="flex items-center gap-1 cursor-pointer">
+            <FaComment /><span>تعليق</span>
+          </div>
+          <div className="flex items-center gap-1 cursor-pointer">
+            <FaShare /><span>مشاركة</span>
           </div>
         </div>
+        <div className="flex items-center gap-2 cursor-pointer">
+          <span>إعادة نشر</span><FaRedo />
+        </div>
+      </div>
+    </div>
+  )) : (
+    <p>لا توجد منشورات.</p>
+  )}
+</div>
+
+        </div>
         <div className="col-span-12 md:col-span-3">
-          <ProfileLeftside />
+          <ProfileLeftside userData={userData} />
         </div>
       </div>
     </div>
