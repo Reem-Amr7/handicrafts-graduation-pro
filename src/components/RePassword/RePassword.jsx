@@ -23,7 +23,7 @@ export default function RePassword() {
     return errors;
   }
 
-  let formik = useFormik({
+  const formik = useFormik({
     initialValues: {
       email: "",
     },
@@ -41,13 +41,13 @@ export default function RePassword() {
             }
           }
         );
-    
-        // طباعة الاستجابة بشكل كامل في الـ console لفحصها
+
         console.log("Response data:", response.data);
-    
-        // عرض الرسالة من الاستجابة مباشرة
+
         if (response.data) {
-          alert(response.data); // عرض الرسالة الموجودة في الاستجابة
+          alert(response.data); // أو استخدمي toast لو تحبي
+          localStorage.setItem("resetEmail", values.email); // حفظ الإيميل مؤقتًا
+          navigate('/otp'); // التوجيه لصفحة OTP
         } else {
           alert("تمت العملية بنجاح، ولكن لم نتمكن من العثور على الرسالة.");
         }
@@ -57,21 +57,16 @@ export default function RePassword() {
       }
       setIsLoading(false);
     }
-    
-    
-    
-    
-    
   });
 
   return (
     <div className={styles.container} style={{ backgroundImage: `url(${background})` }}>
       <div className={styles.formContainer}>
         <h1 className='text-3xl text-center mb-6'>إعادة تعيين كلمة المرور</h1>
-        
-        {userMessage && <div className={styles.successMessage}>{userMessage}</div>} {/* عرض رسالة النجاح */}
+
+        {userMessage && <div className={styles.successMessage}>{userMessage}</div>}
         {errorMessage && <div className={styles.errorMessage}>{errorMessage}</div>}
-        
+
         <form onSubmit={formik.handleSubmit}>
           <div className='my-2'>
             <label htmlFor="email" className="block mb-2 text-sm font-medium text-right w-full">البريد الإلكتروني</label>
@@ -86,7 +81,9 @@ export default function RePassword() {
               placeholder="example@gmail.com"
             />
           </div>
-          {formik.touched.email && formik.errors.email && <div className={styles.errorMessage}>{formik.errors.email}</div>}
+          {formik.touched.email && formik.errors.email && (
+            <div className={styles.errorMessage}>{formik.errors.email}</div>
+          )}
           <div className='my-4 text-end'>
             {isLoading ? (
               <button type='submit' className='bg-[#2E230D] text-white px-4 py-2 rounded-lg w-full'>

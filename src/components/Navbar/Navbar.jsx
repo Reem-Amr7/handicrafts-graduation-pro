@@ -117,51 +117,9 @@ export default function Navbar() {
           <span>تراثنا</span>
         </div>
 
-        <div className="relative" ref={searchRef}>
-          <div className="flex items-center">
-            <input
-              type="text"
-              placeholder="ابحث عن الحرفيين..."
-              className={`${inputWidth} transition-all duration-300 p-2 rounded-full border-2 border-[#E6D5B8] bg-white text-black outline-none pl-10`}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{ paddingLeft: '2.5rem' }}
-            />
-            {!showSearch && (
-              <FaSearch
-                className="absolute left-3 text-black cursor-pointer"
-                onClick={handleShowSearch}
-              />
-            )}
-          </div>
-
-          {searchResults.length > 0 && (
-            <div className="absolute mt-1 w-full bg-white rounded shadow-lg z-50 text-black">
-              <ul className="max-h-48 overflow-y-auto">
-                {searchResults.map((user) => (
-                  <li key={user.id} className="px-3 py-2 hover:bg-gray-100">
-                    <Link to={`/profile/${user.id}`} className="flex items-center gap-2">
-                      <img
-                        src={user.profilePicture || 'https://via.placeholder.com/32'}
-                        alt={user.fullName}
-                        className="w-6 h-6 rounded-full object-cover"
-                      />
-                      <span>{user.fullName}</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-
         {userId && (
-          <nav
-            className={`${
-              isMenuOpen ? 'block' : 'hidden'
-            } md:block absolute md:static w-full md:w-auto top-full left-0 bg-[#5D4037] md:bg-transparent p-4 md:p-0`}
-          >
-            <ul className="flex flex-col md:flex-row gap-2 md:gap-6">
+          <nav className="hidden md:block">
+            <ul className="flex flex-row-reverse gap-6">
               <li><Link to="/" className="hover:bg-white/20 py-1 px-2 rounded">الرئيسية</Link></li>
               <li><Link to="/home" className="hover:bg-white/20 py-1 px-2 rounded">المجتمع</Link></li>
               <li><Link to="/shop" className="hover:bg-white/20 py-1 px-2 rounded">المتجر</Link></li>
@@ -172,44 +130,90 @@ export default function Navbar() {
           </nav>
         )}
 
-        <div className="flex items-center gap-4">
-          {userId && (
-            <>
-              <span onClick={() => navigate('/messages')} className="text-xl hover:text-[#E6D5B8] cursor-pointer">
-                <FaEnvelope />
-              </span>
-              <span onClick={() => navigate('/notifications')} className="text-xl hover:text-[#E6D5B8] cursor-pointer">
-                <FaBell />
-              </span>
-              <span onClick={() => navigate('/cart')} className="text-xl hover:text-[#E6D5B8] cursor-pointer">
-                <FaShoppingCart />
-              </span>
-            </>
-          )}
-
-          {userId ? (
-            <UserMenu
-              userName={userName}
-              photo={photo}
-              onLogout={handleLogout}
-            />
-          ) : (
-            <div className="flex gap-3">
-              <Link
-                to="/login"
-                className="bg-[#2E230D] text-white px-4 py-2 rounded-lg hover:bg-[#A68B55] transition-colors"
-              >
-                Login
-              </Link>
-
-              <Link
-                to="/register"
-                className="bg-[#A68B55] text-white px-4 py-2 rounded-lg hover:bg-[#2E230D] transition-colors"
-              >
-                Sign Up
-              </Link>
+        <div className="flex items-center gap-3 flex-row-reverse">
+          <div className="flex items-center gap-3">
+            <div
+              onClick={() => navigate('/messages')}
+              className="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-xl text-white cursor-pointer"
+            >
+              <FaEnvelope className="text-lg" /> {/* تحديد حجم الأيقونة */}
             </div>
-          )}
+            <div
+              onClick={() => navigate('/notifications')}
+              className="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-xl text-white cursor-pointer"
+            >
+              <FaBell className="text-lg" /> {/* تحديد حجم الأيقونة */}
+            </div>
+            <div
+              onClick={() => navigate('/cart')}
+              className="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-xl text-white cursor-pointer"
+            >
+              <FaShoppingCart className="text-lg" /> {/* تحديد حجم الأيقونة */}
+            </div>
+
+            {userId ? (
+              <UserMenu
+                userName={userName}
+                photo={photo}
+                onLogout={handleLogout}
+              />
+            ) : (
+              <div className="flex gap-3">
+                <Link
+                  to="/login"
+                  className="bg-[#2E230D] text-white px-4 py-2 rounded-lg hover:bg-[#A68B55] transition-colors"
+                >
+                  Login
+                </Link>
+
+                <Link
+                  to="/register"
+                  className="bg-[#A68B55] text-white px-4 py-2 rounded-lg hover:bg-[#2E230D] transition-colors"
+                >
+                  Sign Up
+                </Link>
+              </div>
+            )}
+          </div>
+
+          {/* هنا إضافة نفس حجم البحث */}
+          <div className="relative" ref={searchRef}>
+            <div className="flex items-center">
+              <input
+                type="text"
+                placeholder="ابحث عن الحرفيين..."
+                className={`${inputWidth} transition-all duration-300 w-10 h-10 px-1 py-5 rounded-full border-2 border-[#E6D5B8] bg-white text-black outline-none `}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{ paddingLeft: '2.5rem' }}
+              />
+              {!showSearch && (
+                <FaSearch
+                  className="absolute left-4 top-4 text-black cursor-pointer"
+                  onClick={handleShowSearch}
+                />
+              )}
+            </div>
+
+            {searchResults.length > 0 && (
+              <div className="absolute mt-1 w-full bg-white rounded shadow-lg z-50 text-black">
+                <ul className="max-h-48 overflow-y-auto">
+                  {searchResults.map((user) => (
+                    <li key={user.id} className="px-3 py-2 hover:bg-gray-100">
+                      <Link to={`/profile/${user.id}`} className="flex items-center gap-2">
+                        <img
+                          src={user.profilePicture || 'https://via.placeholder.com/32'}
+                          alt={user.fullName}
+                          className="w-6 h-6 rounded-full object-cover"
+                        />
+                        <span>{user.fullName}</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
         </div>
 
         <FaBars
