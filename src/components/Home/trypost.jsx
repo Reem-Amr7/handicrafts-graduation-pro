@@ -24,7 +24,7 @@ export default function Posty() {
         const fetchPosts = async () => {
             try {
                 const response = await axios.get(
-                    "https://ourheritage.runasp.net/api/Articles?PageIndex=1&PageSize=20",
+                    "https://ourheritage.runasp.net/api/Articles?PageIndex=1&PageSize=30",
                     {
                         headers: {
                             Authorization: `Bearer ${token}`,
