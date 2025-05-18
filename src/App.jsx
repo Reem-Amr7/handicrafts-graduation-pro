@@ -17,7 +17,12 @@ import PostDetails from './components/Home/Postdetails';
 import HandicraftRecommendation from './components/Recommendation/recommend';
 import HandicraftsHomePage from './components/Home2/home2';
 import Profile from './components/Profile/Profile';
-import Cart from './components/Cart/Cart';
+import Cart from './components/Cart/Cart'; // ✅ غيرت الاسم هنا
+
+// استيراد السياقات الخاصة بـ Token و Cart
+import TokenContextProvider from './Context/TokenContext';
+
+import { CartProvider } from './components/Cart/Cart';
 
 function App() {
   const routes = createBrowserRouter([
@@ -34,9 +39,9 @@ function App() {
         { path: "newpassword", element: <NewPassword /> },
         { path: "home", element: <Home /> },
         { path: "blog", element: <Blog /> },
-        { path: "product-details", element: <ProductDetails /> },
+        { path: "product-details/:id", element: <ProductDetails /> },
         { path: "shop", element: <Shop /> },
-        { path: "cart", element: <Cart/> },
+        { path: "cart", element: <Cart /> }, // ✅ استخدم Cart هنا
         { path: "LiveStream", element: <LiveStream /> },
         { path: "Blogdetails", element: <Blogdetail /> },
         { path: "post/:postId", element: <PostDetails /> },
@@ -48,7 +53,14 @@ function App() {
     },
   ], { basename: "/graduation-pro-front" });
 
-  return <RouterProvider router={routes} />;
+  return (
+    <TokenContextProvider>
+    <CartProvider>
+      <RouterProvider router={routes} />
+    </CartProvider>
+  </TokenContextProvider>
+  
+  );
 }
 
 export default App;
