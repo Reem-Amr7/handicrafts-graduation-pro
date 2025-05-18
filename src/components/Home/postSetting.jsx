@@ -30,7 +30,7 @@ export default function PostSettings({post,setPosts}) {
 
       {isListOpen && (
         <div 
-          className="absolute right-0 shadow-lg mt-2 p-2 w-48" 
+          className="absolute  z-10 right-0  shadow-lg mt-2 p-2 w-48" 
           style={{ border: '2px solid #B18B5E', backgroundColor: '#FFFCFC' }}
         >
           <div className="cursor-pointer hover:bg-gray-100 p-2">

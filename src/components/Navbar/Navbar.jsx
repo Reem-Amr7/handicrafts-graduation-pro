@@ -15,6 +15,8 @@ import photo from "../../assets/Screenshot 2025-02-13 210809.png";
 import styles from './Navbar.module.css';
 import { TokenContext } from "../../Context/TokenContext";
 import UserMenu from './UserMenu';
+import NotificationBell  from './notifications'
+import ConversationListDropdown from './ConversationsList'
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -133,18 +135,10 @@ export default function Navbar() {
 
         <div className="flex items-center gap-3 flex-row-reverse">
           <div className="flex items-center gap-3">
-            <div
-              onClick={() => navigate('/messages')}
-              className="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-xl text-white cursor-pointer"
-            >
-              <FaEnvelope className="text-lg" /> {/* تحديد حجم الأيقونة */}
-            </div>
-            <div
-              onClick={() => navigate('/notifications')}
-              className="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-xl text-white cursor-pointer"
-            >
-              <FaBell className="text-lg" /> {/* تحديد حجم الأيقونة */}
-            </div>
+          <ConversationListDropdown />
+
+            <NotificationBell />
+
             <div
               onClick={() => navigate('/cart')}
               className="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-xl text-white cursor-pointer"

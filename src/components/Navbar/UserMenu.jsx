@@ -53,13 +53,13 @@ const UserMenu = ({ photo, onLogout }) => {
         >
           <button
             onClick={goToProfile}
-            className="w-full text-right px-4 py-2 text-[#5D4037] font-semibold border-b hover:bg-gray-100"
+            className="w-full text-right bg-gray-100 px-4 py-2 text-[#5D4037] font-semibold border-b hover:bg-red-50"
           >
             {isLoading ? "جاري التحميل..." : fullName || "الملف الشخصي"}
           </button>
           <button
             onClick={onLogout}
-            className="w-full text-right px-4 py-2 text-red-600 hover:bg-red-50"
+            className="w-full bg-gray-100 text-right px-4 py-2 text-red-600 hover:bg-red-50"
           >
             تسجيل الخروج
           </button>

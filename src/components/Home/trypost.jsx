@@ -8,6 +8,7 @@ import Comment from "./comment";
 import PostSettings from "./postSetting";
 import Like from "./like";
 import profileimage from '../../assets/OIP (1).jpg';
+import Repost from './Repost';
 
 export default function Posty() {
     const { token } = useContext(TokenContext);
@@ -16,14 +17,37 @@ export default function Posty() {
     const [openComments, setOpenComments] = useState({});
     const [sortOption, setSortOption] = useState("الأحدث");
     const [selectedPost, setSelectedPost] = useState(null);
-    const navigate = useNavigate();  // استخدم useNavigate لتوجيه المستخدم
+    const navigate = useNavigate();
+
+    const fetchReposts = async (culturalArticleId) => {
+        try {
+            const response = await axios.get(
+                `https://ourheritage.runasp.net/api/Repost/get-reposts/${culturalArticleId}?pageIndex=1&pageSize=10`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        Accept: "application/json",
+                    },
+                }
+            );
+
+            if (response.status === 200) {
+                return response.data.items || [];
+            }
+            return [];
+        } catch (err) {
+            console.error("خطأ في جلب الريبوستات:", err);
+            return [];
+        }
+    };
 
     useEffect(() => {
         if (!token) return;
 
-        const fetchPosts = async () => {
+        const fetchAllPosts = async () => {
             try {
-                const response = await axios.get(
+                // جلب المنشورات الأصلية
+                const postsResponse = await axios.get(
                     "https://ourheritage.runasp.net/api/Articles?PageIndex=1&PageSize=30",
                     {
                         headers: {
@@ -33,8 +57,25 @@ export default function Posty() {
                     }
                 );
 
-                if (response.status === 200) {
-                    setPosts(response.data.items || response.data);
+                if (postsResponse.status === 200) {
+                    const originalPosts = postsResponse.data.items || postsResponse.data;
+                    
+                    // جلب الريبوستات لكل منشور
+                    const postsWithReposts = await Promise.all(
+                        originalPosts.map(async (post) => {
+                            const reposts = await fetchReposts(post.id);
+                            return {
+                                ...post,
+                                isRepost: false, // علامة أن هذا منشور أصلي
+                                reposts: reposts.map(r => ({
+                                    ...r,
+                                    isRepost: true // علامة أن هذه ريبوست
+                                }))
+                            };
+                        })
+                    );
+
+                    setPosts(postsWithReposts);
                 } else {
                     setError("لا توجد منشورات حالياً.");
                 }
@@ -44,7 +85,7 @@ export default function Posty() {
             }
         };
 
-        fetchPosts();
+        fetchAllPosts();
     }, [token]);
 
     const handleSortChange = (e) => {
@@ -69,7 +110,24 @@ export default function Posty() {
     });
 
     const goToProfile = (userId) => {
-        navigate(`/profile/${userId}`);  // التوجيه إلى صفحة البروفايل باستخدام المعرف
+        navigate(`/profile/${userId}`);
+    };
+
+    const handleRepostSuccess = async (culturalArticleId) => {
+        const updatedPosts = await Promise.all(posts.map(async post => {
+            if (post.id === culturalArticleId) {
+                const reposts = await fetchReposts(post.id);
+                return {
+                    ...post,
+                    reposts: reposts.map(r => ({
+                        ...r,
+                        isRepost: true
+                    }))
+                };
+            }
+            return post;
+        }));
+        setPosts(updatedPosts);
     };
 
     if (error) {
@@ -94,62 +152,149 @@ export default function Posty() {
                 </div>
             </div>
 
-            {sortedPosts.map((post) => (
-                <div
-                    key={post.id}
-                    className="post-card bg-white rounded shadow-md mb-6 transition hover:-translate-y-[3px] hover:shadow-lg border-t-4 border-[#B22222] relative p-4"
-                >
-                    <div className="post-header flex items-center mb-3">
-                        <img
-                            src={post.userProfilePicture || profileimage}
-                            className="w-10 h-10 border-2 border-red-900 rounded-full cursor-pointer"
-                            onClick={() => goToProfile(post.userId)}  // عند الضغط على الصورة يتم التوجيه إلى صفحة البروفايل
-                        />
-                        <div className="post-author-info mt-2 mr-3 flex-1">
-                            <h3 className="post-author-name font-normal text-[#5C4033] text-lg flex items-center">
-                                {post.nameOfUser}
-                            </h3>
-                            <p className="post-time text-gray-500 text-xs mt-1">
-                                {post.timeAgo} • {post.nameOfCategory}
-                            </p>
-                        </div>
-
-                        <span className="post-category bg-[#fcfcfb] text-[#8B4513] px-2 py-1 rounded text-xs font-semibold whitespace-nowrap">
-                            <PostSettings post={post} setPosts={setPosts} />
-                        </span>
-                    </div>
-
-                    <div className="post-content mb-3 text-base leading-relaxed">
-                        <p className="whitespace-pre-line">{post.content}</p>
-
-                        {post.imageURL?.length > 0 && (
-                            <div className="post-img-container mb-3 rounded overflow-hidden">
-                                <img
-                                    src={post.imageURL[0]}
-                                    alt="صورة المنشور"
-                                    className="w-full max-h-96 object-cover cursor-pointer transition hover:scale-105"
-                                    onClick={() => setSelectedPost(post)}
-                                />
+{sortedPosts
+  .filter(post => !post.isHidden) // تجاهل المنشورات المخفية
+  .map((post) => (
+                <div key={post.id} className="mb-6 mt-8">
+                    {/* المنشور الأصلي */}
+                    <div className="post-card bg-white rounded shadow-md transition hover:-translate-y-[3px] hover:shadow-lg border-t-4 border-[#B22222] relative p-4">
+                        <div className="post-header flex items-center mb-3">
+                            <img
+                                src={post.userProfilePicture || profileimage}
+                                className="w-10 h-10 border-2 border-red-900 rounded-full cursor-pointer"
+                                onClick={() => goToProfile(post.userId)}
+                            />
+                            <div className="post-author-info mt-2 mr-3 flex-1">
+                                <h3 className="post-author-name font-normal text-[#5C4033] text-lg flex items-center">
+                                    {post.nameOfUser}
+                                </h3>
+                                <p className="post-time text-gray-500 text-xs mt-1">
+                                    {post.timeAgo} • {post.nameOfCategory}
+                                </p>
                             </div>
-                        )}
+
+                            <span className="post-category bg-[#fcfcfb] text-[#8B4513] px-2 py-1 rounded text-xs font-semibold whitespace-nowrap">
+                                <PostSettings post={post} setPosts={setPosts} />
+                            </span>
+                        </div>
+
+                        <div className="post-content mb-3 text-base leading-relaxed">
+                            <p className="whitespace-pre-line">{post.content}</p>
+
+                            {post.imageURL?.length > 0 && (
+                                <div className="post-img-container mb-3 rounded overflow-hidden">
+                                    <img
+                                        src={post.imageURL[0]}
+                                        alt="صورة المنشور"
+                                        className="w-full max-h-96 object-cover cursor-pointer transition hover:scale-105"
+                                        onClick={() => setSelectedPost(post)}
+                                    />
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="post-actions flex border-t pt-3">
+                            <Like post={post} />
+
+                            <div
+                                className="post-action flex items-center mr-3 text-gray-600 cursor-pointer transition hover:text-[#A0522D] text-sm"
+                                onClick={() => toggleComments(post.id)}
+                            >
+                                <span>{post.commentCount}</span>
+                                <FaComment className="ml-1 text-gray-500" />
+                            </div>
+                            <div className="post-action flex items-center text-gray-600 cursor-pointer transition hover:text-[#A0522D] text-sm">
+                                <Repost post={post} userId={post.userId || 0} onSuccess={() => handleRepostSuccess(post.id)} />
+                            </div>
+                        </div>
+
+                        {openComments[post.id] && <Comment post={post} />}
                     </div>
 
-                    <div className="post-actions flex border-t pt-3">
-                        <Like post={post} />
+                    {/* عرض الريبوستات الخاصة بهذا المنشور */}
+                   {post.reposts && post.reposts.map((repost) => (
+    <div key={repost.id} className="post-card mt-8 w-full bg-white rounded shadow-md transition hover:-translate-y-[3px] hover:shadow-lg border-t-4 border-[#8B4513] relative p-4 ml-8">
+        {/* وسم يوضح أنه معاد نشره */}
+        <span className="absolute top-2 right-2 bg-[#f8f8f8] text-[#8B4513] px-2 py-1 rounded text-xs font-semibold">
+            منشور معاد نشره
+        </span>
 
-                        <div
-                            className="post-action flex items-center mr-3 text-gray-600 cursor-pointer transition hover:text-[#A0522D] text-sm"
-                            onClick={() => toggleComments(post.id)}
-                        >
-                            <span>{post.commentCount}</span>
-                            <FaComment className="ml-1 text-gray-500" />
-                        </div>
-                        <div className="post-action flex items-center text-gray-600 cursor-pointer transition hover:text-[#A0522D] text-sm">
-                            <FaShareAlt className="ml-1 text-gray-500" />
-                        </div>
+        {/* معلومات المستخدم اللي عمل الريبوست */}
+        <div className="post-header flex items-center mb-3">
+            <img
+                src={repost.userProfilePicture || profileimage}
+                className="w-10 h-10 border-2 border-red-900 rounded-full cursor-pointer"
+                onClick={() => goToProfile(repost.userId)}
+            />
+            <div className="post-author-info mt-2 mr-3 flex-1">
+                <h3 className="post-author-name font-normal text-[#5C4033] text-lg flex items-center">
+                    {repost.user?.firstName} {repost.user?.lastName}
+                </h3>
+                <p className="post-time text-gray-500 text-xs mt-1">
+                    {new Date(repost.dateCreated).toLocaleString()}
+                </p>
+            </div>
+        </div>
+
+        {/* محتوى الريبوست نفسه لو فيه كلام */}
+        {repost.content && (
+            <div className="mb-3 text-base leading-relaxed text-[#5C4033]">
+                <p className="whitespace-pre-line">{repost.content}</p>
+            </div>
+        )}
+
+        {/* المنشور الأصلي داخل كارد */}
+        {repost.originalPost && (
+            <div className="bg-[#fdf9f5] border border-[#deb887] rounded p-4 shadow-inner">
+                <div className="flex items-center mb-3">
+                    <img
+                        src={repost.originalPost.userProfilePicture || profileimage}
+                        className="w-8 h-8 border-2 border-red-900 rounded-full cursor-pointer"
+                        onClick={() => goToProfile(repost.originalPost.userId)}
+                    />
+                    <div className="ml-3">
+                        <h4 className="text-[#5C4033] font-medium">
+                            {repost.originalPost.nameOfUser}
+                        </h4>
+                        <p className="text-xs text-gray-500">
+                            {new Date(repost.originalPost.dateCreated).toLocaleString()}
+                        </p>
                     </div>
+                </div>
 
-                    {openComments[post.id] && <Comment post={post} />}
+                <p className="text-sm text-[#5C4033] whitespace-pre-line mb-3">
+                    {repost.originalPost.content}
+                </p>
+
+                {repost.originalPost.imageURL?.length > 0 && (
+                    <img
+                        src={repost.originalPost.imageURL[0]}
+                        alt="صورة المنشور الأصلي"
+                        className="w-full max-h-80 object-cover rounded"
+                    />
+                )}
+            </div>
+        )}
+
+        {/* التفاعلات الخاصة بالريبوست نفسه */}
+        <div className="post-actions flex border-t pt-3 mt-3">
+            <Like post={repost} />
+            <div
+                className="post-action flex items-center mr-3 text-gray-600 cursor-pointer transition hover:text-[#A0522D] text-sm"
+                onClick={() => toggleComments(repost.id)}
+            >
+                <span>{repost.commentCount}</span>
+                <FaComment className="ml-1 text-gray-500" />
+            </div>
+            <div className="post-action flex items-center text-gray-600 cursor-pointer transition hover:text-[#A0522D] text-sm">
+                <Repost post={repost} userId={repost.userId || 0} onSuccess={() => handleRepostSuccess(repost.id)} />
+            </div>
+        </div>
+
+        {openComments[repost.id] && <Comment post={repost} />}
+    </div>
+))}
+
                 </div>
             ))}
 
@@ -177,22 +322,9 @@ export default function Posty() {
                             />
                         </div>
 
-                        <div className="w-full md:w-1/2 h-1/2 md:h-full p-6 overflow-y-auto bg-white">
-                            <div className="flex items-center mb-4">
-                                <img
-                                    src={selectedPost.userProfilePicture || profileimage}
-                                    alt="مستخدم"
-                                    className="w-10 h-10 rounded-full border-2 border-red-800"
-                                />
-                                <div className="mr-3">
-                                    <h3 className="text-[#5C4033] font-semibold">{selectedPost.nameOfUser}</h3>
-                                    <p className="text-xs text-gray-500">{selectedPost.timeAgo}</p>
-                                </div>
-                            </div>
-
-                            <p className="text-[#5C4033] mb-4">{selectedPost.content}</p>
-
-                            <Comment post={selectedPost} />
+                        <div className="p-6 text-[#8B4513] font-normal text-lg flex flex-col justify-between">
+                            <h3 className="text-lg font-semibold">{selectedPost.title}</h3>
+                            <p className="text-base leading-relaxed">{selectedPost.content}</p>
                         </div>
                     </div>
                 </div>

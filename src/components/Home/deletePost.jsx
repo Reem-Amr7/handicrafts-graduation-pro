@@ -47,6 +47,8 @@ export default function DeletePost({ postId }) {
         setError(`خطأ من الخادم: ${err.response.status} - ${err.response.data.message || "حدث خطأ أثناء الحذف."}`);
       } else if (err.code === 'ECONNABORTED') {
         setError("الطلب استغرق وقتًا طويلاً. يرجى المحاولة لاحقًا.");
+      } else if (err.message === "Network Error") {
+        setError("حدث خطأ في الشبكة. يرجى التحقق من الاتصال.");
       } else {
         setError("حدث خطأ أثناء حذف المنشور. حاول مرة أخرى.");
       }

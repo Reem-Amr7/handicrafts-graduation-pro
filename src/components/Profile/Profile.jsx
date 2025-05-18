@@ -52,7 +52,7 @@ export default function Profile() {
         `https://ourheritage.runasp.net/api/Users/${id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
+  
       const postsRes = await axios.get(
         `https://ourheritage.runasp.net/api/Articles`,
         {
@@ -60,46 +60,37 @@ export default function Profile() {
           params: {
             PageIndex: 1,
             PageSize: 100,
-            UserId: id
-          }
+            UserId: id,
+          },
         }
       );
-
+  
       const followersRes = await axios.get(
         `https://ourheritage.runasp.net/api/Follow/${id}/followers`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
+  
       const followingsRes = await axios.get(
         `https://ourheritage.runasp.net/api/Follow/${id}/followings`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
+  
       setUserData(userRes.data);
       setUserSkills(userRes.data.skills || []);
       setFollowers(followersRes.data || []);
       setFollowing(followingsRes.data || []);
-      console.log("Followers response:", followersRes.data);
-      console.log("Following response:", followingsRes.data);
-      const isUserFollowing = followersRes.data.some(follower => follower.id === parseInt(currentUserId));
+      const isUserFollowing = followersRes.data.some(
+        (follower) => follower.id === parseInt(currentUserId)
+      );
       setIsFollowing(isUserFollowing);
       localStorage.setItem(`followStatus_${id}`, JSON.stringify(isUserFollowing));
-
+  
       if (Array.isArray(postsRes.data.items)) {
-        setUserPosts(postsRes.data.items.filter(p => p.userId == id));
+        setUserPosts(postsRes.data.items.filter((p) => p.userId == id));
       }
-
-      const storedPic = localStorage.getItem(picKey);
-      if (storedPic) {
-        setProfilePicture(storedPic);
-      } else if (userRes.data.profilePicture) {
-        localStorage.setItem(picKey, userRes.data.profilePicture);
-        setProfilePicture(userRes.data.profilePicture);
-      }
-
-      const storedCover = localStorage.getItem(coverKey);
-      if (storedCover) setCoverImage(storedCover);
-
+  
+      setProfilePicture(userRes.data.profilePicture || "https://via.placeholder.com/150");
+      setCoverImage(userRes.data.coverProfilePicture || "https://via.placeholder.com/1500x500");
     } catch (err) {
       console.error(err);
       setError("حدث خطأ أثناء جلب البيانات");
@@ -186,7 +177,6 @@ export default function Profile() {
       );
 
       if (response.status === 200) {
-        // Fetch the updated user data to get the new profile picture URL
         const userRes = await axios.get(
          ` https://ourheritage.runasp.net/api/Users/${id}`,
           { headers: { Authorization: `Bearer ${token}` } }
@@ -200,18 +190,37 @@ export default function Profile() {
     }
   };
 
-
-  const handleCoverImageChange = e => {
+  const handleCoverImageChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      if (reader.result !== coverImage) {
-        localStorage.setItem(coverKey, reader.result);
-        setCoverImage(reader.result);
+  
+    const formData = new FormData();
+    formData.append("ImageCover", file);
+  
+    try {
+      const response = await axios.post(
+        "https://ourheritage.runasp.net/api/Users/cover-photo",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+  
+      if (response.status === 200) {
+        const userRes = await axios.get(
+          `https://ourheritage.runasp.net/api/Users/${id}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setCoverImage(userRes.data.coverProfilePicture || "https://via.placeholder.com/1500x500");
+        setUserData(userRes.data);
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      console.error("Error uploading cover image:", err);
+      setError("حدث خطأ أثناء رفع صورة الغلاف.");
+    }
   };
 
   const handleCoverClick = (e) => {
@@ -315,7 +324,7 @@ export default function Profile() {
   };
 
   const handleImageError = (e) => {
-    e.target.src = "https://via.placeholder.com/40"; // Fallback to placeholder if image fails to load
+    e.target.src = "https://via.placeholder.com/40";
   };
 
   if (loading) return <p className="text-center py-8">جاري تحميل البيانات...</p>;
@@ -384,7 +393,7 @@ export default function Profile() {
                 <div className="absolute bottom-0 left-0 p-2">
                   <button
                     onClick={handleFollowToggle}
-                    className="px-4 py-2 bg-blue-500 text-white rounded flex items-center gap-2"
+                    className="px-4 py-2 bg-[#B22222] text-white rounded flex items-center gap-2 hover:bg-[#8B0000]"
                   >
                     {isFollowing ? (
                       <>
@@ -446,7 +455,9 @@ export default function Profile() {
                 placeholder="أدخل مهارة جديدة" 
                 className="mb-2 p-2 border border-gray-300 rounded"
               />
-              <button type="submit" className="px-4 py-2 bg-blue-500 text-white rounded">إضافة مهارة</button>
+              <button type="submit" className="px-4 py-2 bg-[#B22222] text-white rounded hover:bg-[#8B0000]">
+                إضافة مهارة
+              </button>
             </form>
           )}
 
@@ -513,17 +524,17 @@ export default function Profile() {
 
                   <div className="flex justify-between items-center mt-4 text-red-900">
                     <div className="flex gap-8 items-center">
-                      <div className="flex items-center gap-1 cursor-pointer">
+                      <div className={`flex items-center gap-1 cursor-pointer ${styles.postActionButton}`}>
                         <FaThumbsUp /><span>إعجاب</span>
                       </div>
-                      <div className="flex items-center gap-1 cursor-pointer">
+                      <div className={`flex items-center gap-1 cursor-pointer ${styles.postActionButton}`}>
                         <FaComment /><span>تعليق</span>
                       </div>
-                      <div className="flex items-center gap-1 cursor-pointer">
+                      <div className={`flex items-center gap-1 cursor-pointer ${styles.postActionButton}`}>
                         <FaShare /><span>مشاركة</span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 cursor-pointer">
+                    <div className={`flex items-center gap-2 cursor-pointer ${styles.postActionButton}`}>
                       <span>إعادة نشر</span><FaRedo />
                     </div>
                   </div>

@@ -6,7 +6,7 @@ import AboutSection from './about';
 import video from '../../assets/hero.mp4'
 import style from './home2.module.css'
 import video2 from '../../assets/carve.mp4'
-
+import MessagingDropdown from '../Navbar/MessagingDropdown.jsx'
 
 const HandicraftsHomePage = () => {
   return (
@@ -140,6 +140,7 @@ const HandicraftsHomePage = () => {
           </div>
         </div>
       </section>
+      {/* < MessagingDropdown/> */}
 
       {/* Decorative Border */}
       {/* <div className="mt-16 w-full">
@@ -162,9 +163,9 @@ const HandicraftsHomePage = () => {
         >
           learn more about us
         </a>
+
       </div>
     </section>
-
     </div>
   );
 };
