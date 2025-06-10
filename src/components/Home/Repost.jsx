@@ -60,6 +60,7 @@ export default function Repost({ post, userId = 0, onSuccess }) {
                 onClick={openRepostModal}
             >
                 <FaShareAlt className="ml-1 text-gray-500" />
+                <span>إعادة نشر</span>
             </div>
 
             {repostModalOpen && (
@@ -78,13 +79,54 @@ export default function Repost({ post, userId = 0, onSuccess }) {
                                 onClick={closeRepostModal}
                             />
                         </div>
+
+                        {/* Original Post Preview */}
+                        <div className="border border-gray-200 rounded p-4 mb-4 bg-gray-50">
+                            <div className="flex items-center mb-2">
+                                {post?.user?.profilePicture ? (
+                                    <img
+                                        src={post.user.profilePicture}
+                                        alt="Profile"
+                                        className="w-10 h-10 rounded-full ml-2"
+                                    />
+                                ) : (
+                                    <div className="w-10 h-10 rounded-full bg-gray-300 ml-2" />
+                                )}
+                                <div>
+                                    <p className="text-[#5C4033] font-semibold">
+                                        {post?.user?.fullName || "مستخدم غير معروف"}
+                                    </p>
+                                    <p className="text-gray-500 text-sm">
+                                        {post?.createdAt
+                                            ? new Date(post.createdAt).toLocaleDateString("ar-EG", {
+                                                  year: "numeric",
+                                                  month: "long",
+                                                  day: "numeric",
+                                              })
+                                            : "تاريخ غير معروف"}
+                                    </p>
+                                </div>
+                            </div>
+                            <p className="text-[#5C4033] mb-2">{post?.content || "لا يوجد محتوى"}</p>
+                            {post?.media && (
+                                <img
+                                    src={post.media}
+                                    alt="Post media"
+                                    className="w-full h-auto rounded max-h-60 object-cover"
+                                />
+                            )}
+                        </div>
+
+                        {/* Repost Comment Input */}
                         <textarea
                             className="w-full p-2 border rounded mb-4 text-[#5C4033]"
                             placeholder="أضف تعليقًا لإعادة النشر (اختياري)"
                             value={repostContent}
                             onChange={(e) => setRepostContent(e.target.value)}
                         />
+
                         {error && <p className="text-red-600 mb-4">{error}</p>}
+
                         <div className="flex justify-end">
                             <button
                                 className="bg-[#B22222] text-white px-4 py-2 rounded hover:bg-[#8B4513]"

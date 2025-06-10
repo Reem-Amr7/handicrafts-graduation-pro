@@ -41,12 +41,33 @@ export default function Posty() {
         }
     };
 
+    const fetchPostById = async (culturalArticleId) => {
+        try {
+            const response = await axios.get(
+                `https://ourheritage.runasp.net/api/Articles/${culturalArticleId}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        Accept: "application/json",
+                    },
+                }
+            );
+            return response.data;
+        } catch (err) {
+            console.error(`خطأ في جلب المنشور ${culturalArticleId}:`, err);
+            return null;
+        }
+    };
+
     useEffect(() => {
-        if (!token) return;
+        if (!token) {
+            setError("يرجى تسجيل الدخول لعرض المنشورات.");
+            return;
+        }
 
         const fetchAllPosts = async () => {
             try {
-                // جلب المنشورات الأصلية
+                // Fetch original posts
                 const postsResponse = await axios.get(
                     "https://ourheritage.runasp.net/api/Articles?PageIndex=1&PageSize=30",
                     {
@@ -59,18 +80,36 @@ export default function Posty() {
 
                 if (postsResponse.status === 200) {
                     const originalPosts = postsResponse.data.items || postsResponse.data;
-                    
-                    // جلب الريبوستات لكل منشور
+
+                    // Fetch reposts for each post and include original post details
                     const postsWithReposts = await Promise.all(
                         originalPosts.map(async (post) => {
                             const reposts = await fetchReposts(post.id);
+                            // Fetch original post details for each repost
+                            const repostsWithOriginal = await Promise.all(
+                                reposts.map(async (repost) => {
+                                    const originalPost = await fetchPostById(repost.culturalArticleId);
+                                    return {
+                                        ...repost,
+                                        isRepost: true,
+                                        originalPost: originalPost || {
+                                            id: repost.culturalArticleId,
+                                            content: "المنشور الأصلي غير متوفر",
+                                            userId: 0,
+                                            nameOfUser: "مستخدم غير معروف",
+                                            userProfilePicture: profileimage,
+                                            dateCreated: repost.dateCreated,
+                                            imageURL: [],
+                                            commentCount: 0,
+                                            likeCount: 0,
+                                        },
+                                    };
+                                })
+                            );
                             return {
                                 ...post,
-                                isRepost: false, // علامة أن هذا منشور أصلي
-                                reposts: reposts.map(r => ({
-                                    ...r,
-                                    isRepost: true // علامة أن هذه ريبوست
-                                }))
+                                isRepost: false,
+                                reposts: repostsWithOriginal,
                             };
                         })
                     );
@@ -114,19 +153,38 @@ export default function Posty() {
     };
 
     const handleRepostSuccess = async (culturalArticleId) => {
-        const updatedPosts = await Promise.all(posts.map(async post => {
-            if (post.id === culturalArticleId) {
-                const reposts = await fetchReposts(post.id);
-                return {
-                    ...post,
-                    reposts: reposts.map(r => ({
-                        ...r,
-                        isRepost: true
-                    }))
-                };
-            }
-            return post;
-        }));
+        const updatedPosts = await Promise.all(
+            posts.map(async (post) => {
+                if (post.id === culturalArticleId) {
+                    const reposts = await fetchReposts(post.id);
+                    const repostsWithOriginal = await Promise.all(
+                        reposts.map(async (repost) => {
+                            const originalPost = await fetchPostById(repost.culturalArticleId);
+                            return {
+                                ...repost,
+                                isRepost: true,
+                                originalPost: originalPost || {
+                                    id: repost.culturalArticleId,
+                                    content: "المنشور الأصلي غير متوفر",
+                                    userId: 0,
+                                    nameOfUser: "مستخدم غير معروف",
+                                    userProfilePicture: profileimage,
+                                    dateCreated: repost.dateCreated,
+                                    imageURL: [],
+                                    commentCount: 0,
+                                    likeCount: 0,
+                                },
+                            };
+                        })
+                    );
+                    return {
+                        ...post,
+                        reposts: repostsWithOriginal,
+                    };
+                }
+                return post;
+            })
+        );
         setPosts(updatedPosts);
     };
 
@@ -152,151 +210,179 @@ export default function Posty() {
                 </div>
             </div>
 
-{sortedPosts
-  .filter(post => !post.isHidden) // تجاهل المنشورات المخفية
-  .map((post) => (
-                <div key={post.id} className="mb-6 mt-8">
-                    {/* المنشور الأصلي */}
-                    <div className="post-card bg-white rounded shadow-md transition hover:-translate-y-[3px] hover:shadow-lg border-t-4 border-[#B22222] relative p-4">
-                        <div className="post-header flex items-center mb-3">
-                            <img
-                                src={post.userProfilePicture || profileimage}
-                                className="w-10 h-10 border-2 border-red-900 rounded-full cursor-pointer"
-                                onClick={() => goToProfile(post.userId)}
-                            />
-                            <div className="post-author-info mt-2 mr-3 flex-1">
-                                <h3 className="post-author-name font-normal text-[#5C4033] text-lg flex items-center">
-                                    {post.nameOfUser}
-                                </h3>
-                                <p className="post-time text-gray-500 text-xs mt-1">
-                                    {post.timeAgo} • {post.nameOfCategory}
-                                </p>
-                            </div>
-
-                            <span className="post-category bg-[#fcfcfb] text-[#8B4513] px-2 py-1 rounded text-xs font-semibold whitespace-nowrap">
-                                <PostSettings post={post} setPosts={setPosts} />
-                            </span>
-                        </div>
-
-                        <div className="post-content mb-3 text-base leading-relaxed">
-                            <p className="whitespace-pre-line">{post.content}</p>
-
-                            {post.imageURL?.length > 0 && (
-                                <div className="post-img-container mb-3 rounded overflow-hidden">
-                                    <img
-                                        src={post.imageURL[0]}
-                                        alt="صورة المنشور"
-                                        className="w-full max-h-96 object-cover cursor-pointer transition hover:scale-105"
-                                        onClick={() => setSelectedPost(post)}
-                                    />
+            {sortedPosts
+                .filter((post) => !post.isHidden)
+                .map((post) => (
+                    <div key={post.id} className="mb-6 mt-8">
+                        {/* Original Post */}
+                        <div className="post-card bg-white rounded shadow-md transition hover:-translate-y-[3px] hover:shadow-lg border-t-4 border-[#B22222] relative p-4">
+                            <div className="post-header flex items-center mb-3">
+                                <img
+                                    src={post.userProfilePicture || profileimage}
+                                    className="w-10 h-10 border-2 border-red-900 rounded-full cursor-pointer"
+                                    onClick={() => goToProfile(post.userId)}
+                                    alt="Profile"
+                                />
+                                <div className="post-author-info mt-2 mr-3 flex-1">
+                                    <h3 className="post-author-name font-normal text-[#5C4033] text-lg flex items-center">
+                                        {post.nameOfUser || "مستخدم غير معروف"}
+                                    </h3>
+                                    <p className="post-time text-gray-500 text-xs mt-1">
+                                        {post.timeAgo ||
+                                            new Date(post.dateCreated).toLocaleString("ar-EG", {
+                                                year: "numeric",
+                                                month: "long",
+                                                day: "numeric",
+                                                hour: "2-digit",
+                                                minute: "2-digit",
+                                            })}
+                                        {post.nameOfCategory && ` • ${post.nameOfCategory}`}
+                                    </p>
                                 </div>
-                            )}
+                                <span className="post-category bg-[#fcfcfb] text-[#8B4513] px-2 py-1 rounded text-xs font-semibold whitespace-nowrap">
+                                    <PostSettings post={post} setPosts={setPosts} />
+                                </span>
+                            </div>
+
+                            <div className="post-content mb-3 text-base leading-relaxed">
+                                <p className="whitespace-pre-line">{post.content}</p>
+                                {post.imageURL?.length > 0 && (
+                                    <div className="post-img-container mb-3 rounded overflow-hidden">
+                                        <img
+                                            src={post.imageURL[0]}
+                                            alt="صورة المنشور"
+                                            className="w-full max-h-96 object-cover cursor-pointer transition hover:scale-105"
+                                            onClick={() => setSelectedPost(post)}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="post-actions flex border-t pt-3">
+                                <Like post={post} />
+                                <div
+                                    className="post-action flex items-center mr-3 text-gray-600 cursor-pointer transition hover:text-[#A0522D] text-sm"
+                                    onClick={() => toggleComments(post.id)}
+                                >
+                                    <span>{post.commentCount || 0}</span>
+                                    <FaComment className="ml-1 text-gray-500" />
+                                </div>
+                                <div className="post-action flex items-center text-gray-600 cursor-pointer transition hover:text-[#A0522D] text-sm">
+                                    <Repost post={post} userId={post.userId || 0} onSuccess={() => handleRepostSuccess(post.id)} />
+                                    <span>{post.reposts?.length || 0}</span>
+                                </div>
+                            </div>
+
+                            {openComments[post.id] && <Comment post={post} />}
                         </div>
 
-                        <div className="post-actions flex border-t pt-3">
-                            <Like post={post} />
+                        {/* Reposts */}
+                        {post.reposts?.length > 0 && (
+                            <div className="mt-4">
+                                {post.reposts.map((repost) => (
+                                    <div
+                                        key={repost.id}
+                                        className="post-card mt-4 w-full bg-white rounded shadow-md transition hover:-translate-y-[3px] hover:shadow-lg border-t-4 border-[#8B4513] relative p-4 ml-8"
+                                    >
+                                        <span className="absolute top-2 right-2 bg-[#f8f8f8] text-[#8B4513] px-2 py-1 rounded text-xs font-semibold">
+                                            منشور معاد نشره
+                                        </span>
+                                        <div className="post-header flex items-center mb-3">
+                                            <img
+                                                src={repost.user?.profilePicture || profileimage}
+                                                className="w-10 h-10 border-2 border-red-900 rounded-full cursor-pointer"
+                                                onClick={() => goToProfile(repost.userId)}
+                                                alt="Profile"
+                                            />
+                                            <div className="post-author-info mt-2 mr-3 flex-1">
+                                                <h3 className="post-author-name font-normal text-[#5C4033] text-lg flex items-center">
+                                                    {repost.user?.fullName ||
+                                                        `${repost.user?.firstName || ""} ${repost.user?.lastName || ""}`.trim() ||
+                                                        "مستخدم غير معروف"}
+                                                </h3>
+                                                <p className="post-time text-gray-500 text-xs mt-1">
+                                                    {new Date(repost.dateCreated).toLocaleString("ar-EG", {
+                                                        year: "numeric",
+                                                        month: "long",
+                                                        day: "numeric",
+                                                        hour: "2-digit",
+                                                        minute: "2-digit",
+                                                    })}
+                                                </p>
+                                            </div>
+                                        </div>
 
-                            <div
-                                className="post-action flex items-center mr-3 text-gray-600 cursor-pointer transition hover:text-[#A0522D] text-sm"
-                                onClick={() => toggleComments(post.id)}
-                            >
-                                <span>{post.commentCount}</span>
-                                <FaComment className="ml-1 text-gray-500" />
+                                        {repost.content && repost.content !== " " && (
+                                            <div className="mb-3 text-base leading-relaxed text-[#5C4033]">
+                                                <p className="whitespace-pre-line">{repost.content}</p>
+                                            </div>
+                                        )}
+
+                                        {/* Original Post within Repost */}
+                                        <div className="bg-[#fdf9f5] border border-[#deb887] rounded p-4 shadow-inner">
+                                            <div className="flex items-center mb-3">
+                                                <img
+                                                    src={repost.originalPost.userProfilePicture || profileimage}
+                                                    className="w-8 h-8 border-2 border-red-900 rounded-full cursor-pointer"
+                                                    onClick={() => goToProfile(repost.originalPost.userId)}
+                                                    alt="Profile"
+                                                />
+                                                <div className="ml-3">
+                                                    <h4 className="text-[#5C4033] font-medium">
+                                                        {repost.originalPost.nameOfUser || "مستخدم غير معروف"}
+                                                    </h4>
+                                                    <p className="text-xs text-gray-500">
+                                                        {new Date(repost.originalPost.dateCreated).toLocaleString(
+                                                            "ar-EG",
+                                                            {
+                                                                year: "numeric",
+                                                                month: "long",
+                                                                day: "numeric",
+                                                                hour: "2-digit",
+                                                                minute: "2-digit",
+                                                            }
+                                                        )}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <p className="text-sm text-[#5C4033] whitespace-pre-line mb-3">
+                                                {repost.originalPost.content}
+                                            </p>
+                                            {repost.originalPost.imageURL?.length > 0 && (
+                                                <img
+                                                    src={repost.originalPost.imageURL[0]}
+                                                    alt="صورة المنشور الأصلي"
+                                                    className="w-full max-h-80 object-cover rounded"
+                                                />
+                                            )}
+                                        </div>
+
+                                        <div className="post-actions flex border-t pt-3 mt-3">
+                                            <Like post={repost} />
+                                            <div
+                                                className="post-action flex items-center mr-3 text-gray-600 cursor-pointer transition hover:text-[#A0522D] text-sm"
+                                                onClick={() => toggleComments(repost.id)}
+                                            >
+                                                <span>{repost.commentCount || 0}</span>
+                                                <FaComment className="ml-1 text-gray-500" />
+                                            </div>
+                                            <div className="post-action flex items-center text-gray-600 cursor-pointer transition hover:text-[#A0522D] text-sm">
+                                                <Repost
+                                                    post={repost.originalPost}
+                                                    userId={repost.userId || 0}
+                                                    onSuccess={() => handleRepostSuccess(repost.originalPost.id)}
+                                                />
+                                                <span>{repost.reposts?.length || 0}</span>
+                                            </div>
+                                        </div>
+
+                                        {openComments[repost.id] && <Comment post={repost} />}
+                                    </div>
+                                ))}
                             </div>
-                            <div className="post-action flex items-center text-gray-600 cursor-pointer transition hover:text-[#A0522D] text-sm">
-                                <Repost post={post} userId={post.userId || 0} onSuccess={() => handleRepostSuccess(post.id)} />
-                            </div>
-                        </div>
-
-                        {openComments[post.id] && <Comment post={post} />}
+                        )}
                     </div>
-
-                    {/* عرض الريبوستات الخاصة بهذا المنشور */}
-                   {post.reposts && post.reposts.map((repost) => (
-    <div key={repost.id} className="post-card mt-8 w-full bg-white rounded shadow-md transition hover:-translate-y-[3px] hover:shadow-lg border-t-4 border-[#8B4513] relative p-4 ml-8">
-        {/* وسم يوضح أنه معاد نشره */}
-        <span className="absolute top-2 right-2 bg-[#f8f8f8] text-[#8B4513] px-2 py-1 rounded text-xs font-semibold">
-            منشور معاد نشره
-        </span>
-
-        {/* معلومات المستخدم اللي عمل الريبوست */}
-        <div className="post-header flex items-center mb-3">
-            <img
-                src={repost.userProfilePicture || profileimage}
-                className="w-10 h-10 border-2 border-red-900 rounded-full cursor-pointer"
-                onClick={() => goToProfile(repost.userId)}
-            />
-            <div className="post-author-info mt-2 mr-3 flex-1">
-                <h3 className="post-author-name font-normal text-[#5C4033] text-lg flex items-center">
-                    {repost.user?.firstName} {repost.user?.lastName}
-                </h3>
-                <p className="post-time text-gray-500 text-xs mt-1">
-                    {new Date(repost.dateCreated).toLocaleString()}
-                </p>
-            </div>
-        </div>
-
-        {/* محتوى الريبوست نفسه لو فيه كلام */}
-        {repost.content && (
-            <div className="mb-3 text-base leading-relaxed text-[#5C4033]">
-                <p className="whitespace-pre-line">{repost.content}</p>
-            </div>
-        )}
-
-        {/* المنشور الأصلي داخل كارد */}
-        {repost.originalPost && (
-            <div className="bg-[#fdf9f5] border border-[#deb887] rounded p-4 shadow-inner">
-                <div className="flex items-center mb-3">
-                    <img
-                        src={repost.originalPost.userProfilePicture || profileimage}
-                        className="w-8 h-8 border-2 border-red-900 rounded-full cursor-pointer"
-                        onClick={() => goToProfile(repost.originalPost.userId)}
-                    />
-                    <div className="ml-3">
-                        <h4 className="text-[#5C4033] font-medium">
-                            {repost.originalPost.nameOfUser}
-                        </h4>
-                        <p className="text-xs text-gray-500">
-                            {new Date(repost.originalPost.dateCreated).toLocaleString()}
-                        </p>
-                    </div>
-                </div>
-
-                <p className="text-sm text-[#5C4033] whitespace-pre-line mb-3">
-                    {repost.originalPost.content}
-                </p>
-
-                {repost.originalPost.imageURL?.length > 0 && (
-                    <img
-                        src={repost.originalPost.imageURL[0]}
-                        alt="صورة المنشور الأصلي"
-                        className="w-full max-h-80 object-cover rounded"
-                    />
-                )}
-            </div>
-        )}
-
-        {/* التفاعلات الخاصة بالريبوست نفسه */}
-        <div className="post-actions flex border-t pt-3 mt-3">
-            <Like post={repost} />
-            <div
-                className="post-action flex items-center mr-3 text-gray-600 cursor-pointer transition hover:text-[#A0522D] text-sm"
-                onClick={() => toggleComments(repost.id)}
-            >
-                <span>{repost.commentCount}</span>
-                <FaComment className="ml-1 text-gray-500" />
-            </div>
-            <div className="post-action flex items-center text-gray-600 cursor-pointer transition hover:text-[#A0522D] text-sm">
-                <Repost post={repost} userId={repost.userId || 0} onSuccess={() => handleRepostSuccess(repost.id)} />
-            </div>
-        </div>
-
-        {openComments[repost.id] && <Comment post={repost} />}
-    </div>
-))}
-
-                </div>
-            ))}
+                ))}
 
             {selectedPost && (
                 <div
@@ -313,7 +399,6 @@ export default function Posty() {
                         >
                             <FaTimes />
                         </span>
-
                         <div className="w-full md:w-1/2 h-1/2 md:h-full bg-black flex items-center justify-center">
                             <img
                                 src={selectedPost.imageURL?.[0]}
@@ -321,9 +406,8 @@ export default function Posty() {
                                 className="object-contain w-full h-full"
                             />
                         </div>
-
                         <div className="p-6 text-[#8B4513] font-normal text-lg flex flex-col justify-between">
-                            <h3 className="text-lg font-semibold">{selectedPost.title}</h3>
+                            <h3 className="text-lg font-semibold">{selectedPost.title || "بدون عنوان"}</h3>
                             <p className="text-base leading-relaxed">{selectedPost.content}</p>
                         </div>
                     </div>
