@@ -18,6 +18,7 @@ import HandicraftRecommendation from './components/Recommendation/recommend';
 import HandicraftsHomePage from './components/Home2/home2';
 import Profile from './components/Profile/Profile';
 import Cart from './components/Cart/Cart'; // ✅ غيرت الاسم هنا
+import ChatApp from './components/Messages/Messages'
 
 // استيراد السياقات الخاصة بـ Token و Cart
 import TokenContextProvider from './Context/TokenContext';
@@ -48,6 +49,7 @@ function App() {
         { path: "recommend", element: <HandicraftRecommendation /> },
         { path: "home2", element: <HandicraftsHomePage /> },
         { path: "profile/:id", element: <Profile /> },
+        {path:"chat",element:<ChatApp/>},
         { path: "*", element: <Navigate to="/login" replace /> },
       ],
     },
