@@ -1,7 +1,7 @@
 import { useEffect, useState, useContext } from "react";
 import axios from "axios";
 import { TokenContext } from "../../Context/TokenContext";
-import { FaReply, FaTimes, FaUsers } from "react-icons/fa";
+import { FaReply, FaTimes, FaUsers, FaCheck } from "react-icons/fa";
 import chatBackground from "../../assets/back2.jpg";
 
 export default function ChatApp() {
@@ -22,6 +22,7 @@ export default function ChatApp() {
   const [showGroupModal, setShowGroupModal] = useState(false);
   const [groupName, setGroupName] = useState("");
   const [selectedParticipants, setSelectedParticipants] = useState([]);
+  const [groupProfilePicture, setGroupProfilePicture] = useState(null);
 
   const userId = localStorage.getItem("userId") || "tempUserId";
   const userName = localStorage.getItem("userName") || "You";
@@ -53,6 +54,7 @@ export default function ChatApp() {
         return;
       }
       try {
+        // Fetch all messages
         const res = await axios.get(
           `https://ourheritage.runasp.net/api/Chat/messages/all?page=${page}&pageSize=10`,
           {
@@ -62,20 +64,40 @@ export default function ChatApp() {
             },
           }
         );
-
         console.log("Messages API Response:", res.data);
 
-        const messages = res.data.items.map((msg) => {
-          console.log("Message Sender Data:", {
-            senderId: msg.sender?.id,
-            senderFirstName: msg.sender?.firstName,
-            userId,
-            userName,
-          });
+        const messages = res.data.items.map((msg) => ({
+          id: msg.id || `msg-${Date.now()}`,
+          conversationId: msg.conversationId,
+          content: msg.content,
+          senderId: msg.sender?.id || null,
+          sentBy: msg.sender?.firstName || "Unknown",
+          fullName: `${msg.sender?.firstName || "Unknown"} ${msg.sender?.lastName || ""}`.trim(),
+          profilePicture: msg.sender?.profilePicture || "https://via.placeholder.com/40",
+          sentAt: msg.sentAt || new Date().toISOString(),
+          type: msg.type === 0 ? "normal" : "system",
+          replyToMessageId: msg.replyToMessageId || null,
+          isRead: true,
+        }));
+
+        // Fetch unread messages
+        const unreadRes = await axios.get(
+          "https://ourheritage.runasp.net/api/Chat/unread?page=1&pageSize=10",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: "application/json",
+            },
+          }
+        );
+        console.log("Unread API Response:", unreadRes.data);
+
+        const unreadMessages = unreadRes.data.unreadMessages.items.map((msg) => {
+          console.log("Unread Message:", msg);
           return {
             id: msg.id || `msg-${Date.now()}`,
             conversationId: msg.conversationId,
-            content: msg.content,
+            content: msg.content || "",
             senderId: msg.sender?.id || null,
             sentBy: msg.sender?.firstName || "Unknown",
             fullName: `${msg.sender?.firstName || "Unknown"} ${msg.sender?.lastName || ""}`.trim(),
@@ -83,43 +105,62 @@ export default function ChatApp() {
             sentAt: msg.sentAt || new Date().toISOString(),
             type: msg.type === 0 ? "normal" : "system",
             replyToMessageId: msg.replyToMessageId || null,
+            isRead: false,
           };
         });
 
+        // Merge messages, prioritizing unread status
+        const allMessages = messages.map((msg) => {
+          const unreadMsg = unreadMessages.find((u) => u.id === msg.id);
+          return unreadMsg ? { ...msg, isRead: false } : msg;
+        }).concat(
+          unreadMessages.filter((u) => !messages.some((m) => m.id === u.id))
+        );
+
+        // Fetch conversations
         const convRes = await axios.get(
           "https://ourheritage.runasp.net/api/Chat/conversations?page=1&pageSize=20",
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-        console.log("Conversations API Response:", convRes.data);
+        console.log("Conversations API Response:", convRes.data.items);
 
         const conversationMap = convRes.data.items.reduce((acc, conv) => {
           const isGroup = conv.participants?.length > 2;
           acc[conv.id] = {
             id: conv.id,
-            title: conv.title || (isGroup ? "Untitled Group" : conv.participants
+            title: conv.title || (isGroup ? "مجموعة بدون اسم" : conv.participants
               ?.filter(p => p.id !== Number(userId))
               .map((p) => `${p.firstName} ${p.lastName || ""}`)
-              .join(", ") || "Unknown"),
+              .join(", ") || "غير معروف"),
             participants: conv.participants || [],
             isGroup,
+            profilePicture: conv.profilePicture || (isGroup ? "https://via.placeholder.com/40?text=Group" : null),
           };
-          console.log(`Conversation ${conv.id}: title=${acc[conv.id].title}, isGroup=${isGroup}`);
+          console.log(`Conversation ${conv.id}: title=${acc[conv.id].title}, isGroup=${isGroup}, profilePicture=${acc[conv.id].profilePicture}`);
           return acc;
         }, {});
 
-        const groupedConversations = messages.reduce((acc, msg) => {
+        // Calculate unread count per conversation
+        const unreadCountMap = unreadMessages.reduce((acc, msg) => {
+          acc[msg.conversationId] = (acc[msg.conversationId] || 0) + 1;
+          return acc;
+        }, {});
+
+        const groupedConversations = allMessages.reduce((acc, msg) => {
           const convId = msg.conversationId;
           if (!acc[convId]) {
             const convData = conversationMap[convId] || {};
             acc[convId] = {
               id: convId,
-              title: convData.title,
+              title: convData.title || "غير معروف",
               messages: [],
-              participants: convData.participants || [{ firstName: msg.sentBy, lastName: msg.sender?.lastName || "" }],
+              participants: convData.participants || [{ firstName: msg.sentBy || "Unknown", lastName: "" }],
               lastMessage: msg,
               isGroup: convData.isGroup || false,
+              unreadCount: unreadCountMap[convId] || 0,
+              profilePicture: convData.profilePicture || (convData.isGroup ? "https://via.placeholder.com/40?text=200" : "https://via.placeholder.com/40"),
             };
           }
           acc[convId].messages.push(msg);
@@ -128,9 +169,9 @@ export default function ChatApp() {
         }, {});
 
         const updatedConversations = Object.values(groupedConversations);
-        console.log("Conversations:", updatedConversations);
+        console.log("Updated Conversations:", updatedConversations);
         setConversations(updatedConversations);
-        setTotalPages(res.data.totalPages);
+        setTotalPages(res.data.totalPages || 1);
         if (!selectedChat && updatedConversations.length > 0) {
           setSelectedChat(updatedConversations[0]);
         } else if (updatedConversations.length === 0) {
@@ -139,12 +180,64 @@ export default function ChatApp() {
         }
       } catch (err) {
         console.error("خطأ في جلب الرسائل:", err.response?.data);
-        setError("خطأ في جلب الرسائل: " + (err.response?.data?.message || err.message));
+        setError("خطأ في جلب الرسائل: " + (err.response?.data?.text || err.message));
       }
     }
 
     fetchMessages();
   }, [token, page, userName, userId]);
+
+  // Mark messages as read when selecting a chat
+  useEffect(() => {
+    async function markMessagesAsRead() {
+      if (!selectedChat || !token || !selectedChat.messages) return;
+
+      const unreadMessages = selectedChat.messages.filter((msg) => !msg.isRead && msg.senderId !== Number(userId));
+      if (unreadMessages.length === 0) return;
+
+      try {
+        for (const msg of unreadMessages) {
+          await axios.post(
+            `https://ourheritage.runasp.net/api/Chat/messages/${msg.id}/read`,
+            {},
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                Accept: "application/json",
+              },
+            }
+          );
+          console.log(`Message ${msg.id} marked as read`);
+        }
+
+        // Update local state
+        setConversations((prev, chats) =>
+          prev.map((conv) =>
+            conv.id === selectedChat.id
+              ? {
+                  ...conv,
+                  messages: conv.messages.map((m) =>
+                    unreadMessages.some((u) => u.id === m.id) ? { ...m, isRead: true } : m
+                  ),
+                  unreadCount: 0,
+                }
+              : conv
+          )
+        );
+        setSelectedChat((prev) => ({
+          ...prev,
+          messages: prev.messages.map((m) =>
+            unreadMessages.some((u) => u.id === m.id) ? { ...m, isRead: true } : m
+          ),
+          unreadCount: 0,
+        }));
+      } catch (err) {
+        console.error("Error marking messages as read:", err.response?.data);
+      }
+    }
+
+    markMessagesAsRead();
+  }, [selectedChat, token, userId]);
 
   const loadMoreMessages = () => {
     if (page < totalPages) {
@@ -200,6 +293,7 @@ export default function ChatApp() {
           sentAt: new Date().toISOString(),
           type: "normal",
           replyToMessageId: replyToMessage?.id || null,
+          isRead: false,
         };
         setSelectedChat((prev) => ({
           ...prev,
@@ -275,6 +369,8 @@ export default function ChatApp() {
           participants: [{ firstName: friend.userName, id: friend.id }],
           lastMessage: null,
           isGroup: false,
+          unreadCount: 0,
+          profilePicture: friend.profilePicture || "https://via.placeholder.com/40",
         };
         setConversations((prev) => [...prev, newConv]);
         setSelectedChat(newConv);
@@ -304,11 +400,36 @@ export default function ChatApp() {
 
     setIsCreatingChat(true);
     try {
+      // Handle image upload
+      let profilePictureUrl = "https://via.placeholder.com/40?text=Group";
+      if (groupProfilePicture) {
+        const formData = new FormData();
+        formData.append("file", groupProfilePicture);
+        // Replace with actual upload API endpoint
+        /*
+        const uploadRes = await axios.post(
+          "https://ourheritage.runasp.net/api/Chat/upload-profile-picture",
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+        profilePictureUrl = uploadRes.data.url;
+        console.log("Image uploaded:", profilePictureUrl);
+        */
+        // Temporary fallback: use placeholder
+        profilePictureUrl = "https://via.placeholder.com/40?text=Uploaded";
+      }
+
       const createRes = await axios.post(
         "https://ourheritage.runasp.net/api/Chat/conversations",
         {
           participantIds: selectedParticipants.map(id => Number(id)),
           title: groupName,
+          profilePicture: profilePictureUrl,
         },
         {
           headers: {
@@ -356,6 +477,8 @@ export default function ChatApp() {
         ],
         lastMessage: null,
         isGroup: true,
+        unreadCount: 0,
+        profilePicture: profilePictureUrl,
       };
       setConversations((prev) => [...prev, newConv]);
       setSelectedChat(newConv);
@@ -364,6 +487,7 @@ export default function ChatApp() {
       setShowGroupModal(false);
       setGroupName("");
       setSelectedParticipants([]);
+      setGroupProfilePicture(null);
     } catch (err) {
       console.error("Error creating group:", err.response?.data || err.message);
       setError(`خطأ في إنشاء المجموعة: ${err.response?.data?.message || err.message}`);
@@ -495,16 +619,33 @@ export default function ChatApp() {
                   <img
                     src={
                       conv.isGroup
-                        ? "https://via.placeholder.com/40?text=Group"
+                        ? conv.profilePicture || "https://via.placeholder.com/40?text=Group"
                         : conv.participants?.find((p) => p.id !== Number(userId))?.profilePicture ||
                           "https://via.placeholder.com/40"
                     }
-                    alt={conv.isGroup ? "Group" : `${conv.participants?.find((p) => p.id !== Number(userId))?.firstName || "Unknown"}'s profile`}
+                    alt={conv.isGroup ? conv.title || "Group" : `${conv.participants?.find((p) => p.id !== Number(userId))?.firstName || "Unknown"}'s profile`}
                     className="w-10 h-10 rounded-full object-cover"
                     onError={(e) => (e.target.src = "https://via.placeholder.com/40")}
                   />
-                  <div className="flex flex-col">
-                    <span>{conv.title}</span>
+                  <div className="flex flex-col flex-1">
+                    <div className="flex justify-between items-center">
+                      <span>{conv.title || "غير معروف"}</span>
+                      {conv.unreadCount > 0 && (
+                        <span
+                          style={{
+                            backgroundColor: "#22c55e",
+                            color: "white",
+                            borderRadius: "9999px",
+                            padding: "2px 8px",
+                            fontSize: "12px",
+                            minWidth: "20px",
+                            textAlign: "center",
+                          }}
+                        >
+                          {conv.unreadCount}
+                        </span>
+                      )}
+                    </div>
                     <div className="text-xs text-gray-600 truncate pr-2">
                       {conv.lastMessage?.content ||
                         conv.messages?.[0]?.content ||
@@ -559,6 +700,7 @@ export default function ChatApp() {
                   setShowGroupModal(false);
                   setGroupName("");
                   setSelectedParticipants([]);
+                  setGroupProfilePicture(null);
                 }}
                 style={{ color: "#ef4444", fontSize: "24px", cursor: "pointer" }}
               >
@@ -578,6 +720,31 @@ export default function ChatApp() {
                 marginBottom: "16px",
               }}
             />
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setGroupProfilePicture(e.target.files[0])}
+              style={{
+                width: "100%",
+                padding: "8px",
+                border: "1px solid #d1d5db",
+                borderRadius: "4px",
+                marginBottom: "16px",
+              }}
+            />
+            {groupProfilePicture && (
+              <img
+                src={URL.createObjectURL(groupProfilePicture)}
+                alt="Group Preview"
+                style={{
+                  width: "80px",
+                  height: "80px",
+                  borderRadius: "50%",
+                  objectFit: "cover",
+                  marginBottom: "16px",
+                }}
+              />
+            )}
             <input
               type="text"
               placeholder="ابحث عن أصدقاء..."
@@ -640,6 +807,7 @@ export default function ChatApp() {
                   setShowGroupModal(false);
                   setGroupName("");
                   setSelectedParticipants([]);
+                  setGroupProfilePicture(null);
                 }}
                 style={{
                   padding: "8px 16px",
@@ -668,7 +836,7 @@ export default function ChatApp() {
               className="p-4 border-b font-semibold sticky top-0 z-10"
               style={{ backgroundColor: "#F5F5DC", borderBottom: "1px solid black" }}
             >
-              {selectedChat.title}
+              {selectedChat.title || "غير معروف"}
             </div>
             <div
               className="flex-1 p-4 overflow-y-auto space-y-4"
@@ -682,7 +850,7 @@ export default function ChatApp() {
               {(selectedChat.messages || []).map((msg, index) => {
                 const isUser = msg.senderId
                   ? String(msg.senderId) === String(userId)
-                  : msg.sentBy.trim().toLowerCase() === userName.trim().toLowerCase();
+                  : (msg.sentBy || "Unknown").trim().toLowerCase() === userName.trim().toLowerCase();
                 const isSystem = msg.type === "system";
                 const repliedMessage = msg.replyToMessageId
                   ? selectedChat.messages.find((m) => m.id === msg.replyToMessageId)
@@ -702,7 +870,7 @@ export default function ChatApp() {
                     {!isSystem && (
                       <img
                         src={msg.profilePicture}
-                        alt={`${msg.fullName}'s profile`}
+                        alt={`${msg.fullName || "Unknown"}'s profile`}
                         className="w-10 h-10 rounded-full object-cover"
                         onError={(e) => (e.target.src = "https://via.placeholder.com/40")}
                       />
@@ -718,7 +886,7 @@ export default function ChatApp() {
                     >
                       {!isSystem && (
                         <div className="flex justify-between items-center">
-                          <p className="text-sm font-semibold">{msg.fullName}</p>
+                          <p className="text-sm font-semibold">{msg.fullName || "Unknown"}</p>
                           <FaReply
                             className="w-4 h-4 text-gray-400 hover:text-gray-600 cursor-pointer"
                             title="رد"
@@ -728,18 +896,32 @@ export default function ChatApp() {
                       )}
                       {repliedMessage && (
                         <div className="text-xs bg-gray-100 p-2 rounded mb-2">
-                          <p className="font-semibold">{repliedMessage.fullName}</p>
+                          <p className="font-semibold">{repliedMessage.fullName || "Unknown"}</p>
                           <p className="truncate">{repliedMessage.content}</p>
                         </div>
                       )}
                       <p>{msg.content}</p>
                       {!isSystem && (
-                        <small className="text-xs opacity-70">
-                          {new Date(msg.sentAt).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </small>
+                        <div className="flex justify-between items-center">
+                          <small className="text-xs opacity-70">
+                            {new Date(msg.sentAt).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </small>
+                          {isUser && (
+                            <span className="text-xs text-gray-400">
+                              {msg.isRead ? (
+                                <>
+                                  <FaCheck className="inline w-3 h-3" />
+                                  <FaCheck className="inline w-3 h-3 -ml-1" />
+                                </>
+                              ) : (
+                                <FaCheck className="inline w-3 h-3" />
+                              )}
+                            </span>
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>

@@ -12,8 +12,11 @@ export default function NotificationBell() {
 
   useEffect(() => {
     const fetchNotifications = async () => {
+      if (!token) return;
+
       try {
-        const res = await axios.get(
+        // Fetch general notifications
+        const notifRes = await axios.get(
           'https://ourheritage.runasp.net/api/Notification?page=1&pageSize=10',
           {
             headers: {
@@ -22,18 +25,58 @@ export default function NotificationBell() {
             }
           }
         );
-        if (res.data.success && res.data.data) {
-          const items = res.data.data.items || [];
-          setNotifications(items);
-          const unread = items.filter((n) => !n.isRead).length;
-          setUnreadCount(unread);
+        let notifItems = [];
+        if (notifRes.data.success && notifRes.data.data) {
+          notifItems = (notifRes.data.data.items || []).map(n => ({
+            id: n.id,
+            message: n.message,
+            createdAt: n.createdAt,
+            isRead: n.isRead,
+            type: 'general'
+          }));
+          console.log("General Notifications:", notifItems);
         }
+
+        // Fetch unread chat messages
+        const unreadRes = await axios.get(
+          'https://ourheritage.runasp.net/api/Chat/unread?page=1&pageSize=10',
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              accept: 'application/json'
+            }
+          }
+        );
+        const messageNotifs = (unreadRes.data.unreadMessages?.items || []).map(msg => ({
+          id: msg.id,
+          message: `${msg.sender?.firstName || 'Unknown'}: ${msg.content.slice(0, 50)}${msg.content.length > 50 ? '...' : ''}`,
+          createdAt: msg.sentAt || new Date().toISOString(),
+          isRead: false,
+          type: 'message',
+          conversationId: msg.conversationId
+        }));
+        console.log("Message Notifications:", messageNotifs);
+
+        // Merge and sort by createdAt (newest first)
+        const allNotifs = [...messageNotifs, ...notifItems].sort((a, b) => 
+          new Date(b.createdAt) - new Date(a.createdAt)
+        );
+
+        // Filter out locally marked notifications
+        const readIds = JSON.parse(localStorage.getItem('readNotificationIds') || '[]');
+        const filteredNotifs = allNotifs.filter(n => !readIds.includes(n.id));
+        setNotifications(filteredNotifs);
+
+        // Calculate unread count
+        const unread = filteredNotifs.filter(n => !n.isRead).length;
+        setUnreadCount(unread);
+        console.log("Filtered Notifications:", filteredNotifs, "Unread Count:", unread);
       } catch (error) {
-        console.error("فشل جلب الإشعارات:", error);
+        console.error("فشل جلب الإشعارات:", error.response?.data || error.message);
       }
     };
 
-    if (token) fetchNotifications();
+    fetchNotifications();
   }, [token]);
 
   useEffect(() => {
@@ -46,16 +89,41 @@ export default function NotificationBell() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleToggle = () => {
+  const handleToggle = async () => {
     setIsOpen(!isOpen);
-    if (!isOpen) setUnreadCount(0); // عند الفتح صفر العداد
+    if (!isOpen) {
+      // Mark all notifications as read
+      try {
+        // Assume API to mark all notifications as read
+        /*
+        await axios.post(
+          'https://ourheritage.runasp.net/api/Notification/mark-all-as-read',
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              accept: 'application/json'
+            }
+          }
+        );
+        */
+        // Fallback: Store read IDs in localStorage
+        const readIds = [...new Set([...notifications.map(n => n.id), ...JSON.parse(localStorage.getItem('readNotificationIds') || '[]')])];
+        localStorage.setItem('readNotificationIds', JSON.stringify(readIds));
+        setUnreadCount(0);
+        setNotifications(notifications.map(n => ({ ...n, isRead: true })));
+        console.log("Marked notifications as read:", readIds);
+      } catch (error) {
+        console.error("فشل تحديد الإشعارات كمقروءة:", error.response?.data || error.message);
+      }
+    }
   };
 
   return (
     <div className="relative" ref={dropdownRef}>
       <div
         onClick={handleToggle}
-        className="relative w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white cursor-pointer text-gray-800 cursor-pointer transition duration-150"
+        className="relative w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white cursor-pointer transition duration-150"
       >
         <FaBell className="text-lg" />
         {unreadCount > 0 && (
@@ -67,16 +135,18 @@ export default function NotificationBell() {
 
       {isOpen && (
         <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto bg-white rounded-2xl shadow-xl z-50">
-          <div className="p-4 border-b font-semibold text-gray-800">الإشعارات</div>
+          <div className="p-4 border-b font-semibold text-[#894414]" style={{ backgroundColor: '#F5F5DC' }}>
+            الإشعارات
+          </div>
           {notifications.length === 0 ? (
             <div className="p-4 text-sm text-center text-gray-500">لا توجد إشعارات</div>
           ) : (
             <ul>
               {notifications.map((notif, idx) => (
                 <li
-                  key={idx}
+                  key={notif.id || idx}
                   className={`flex flex-col px-4 py-3 text-sm border-b hover:bg-gray-50 transition-all duration-150 ${
-                    notif.isRead ? 'text-gray-500' : 'font-semibold text-black'
+                    notif.isRead ? 'text-gray-500' : 'font-semibold text-[#894414]'
                   }`}
                 >
                   <span>{notif.message}</span>
@@ -87,7 +157,7 @@ export default function NotificationBell() {
               ))}
             </ul>
           )}
-          <div className="p-3 text-center text-blue-600 hover:text-blue-800 hover:underline cursor-pointer transition">
+          <div className="p-3 text-center text-[#894414] hover:text-[#6b3310] hover:underline cursor-pointer transition">
             عرض كل الإشعارات
           </div>
         </div>
