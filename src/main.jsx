@@ -6,6 +6,7 @@ import App from './App.jsx';
 import TokenContextProvider from './Context/TokenContext.jsx';
 import { PostProvider } from './Context/PostContext.jsx';
 import { UserProvider } from './Context/User Context.jsx';  // تأكد من المسار الصحيح
+import 'leaflet/dist/leaflet.css';
 
 createRoot(document.getElementById('root')).render(
   <TokenContextProvider>
