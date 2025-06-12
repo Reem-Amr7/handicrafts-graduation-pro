@@ -18,12 +18,9 @@ import HandicraftRecommendation from './components/Recommendation/recommend';
 import HandicraftsHomePage from './components/Home2/home2';
 import Profile from './components/Profile/Profile';
 import Cart from './components/Cart/Cart'; // ✅ غيرت الاسم هنا
-import ChatApp from './components/Messages/Messages'
-
+import { CartProvider } from "./Context/CartContext"; // عدّل المسار حسب مكان الملف
 // استيراد السياقات الخاصة بـ Token و Cart
 import TokenContextProvider from './Context/TokenContext';
-
-import { CartProvider } from './components/Cart/Cart';
 
 function App() {
   const routes = createBrowserRouter([
@@ -55,14 +52,7 @@ function App() {
     },
   ], { basename: "/graduation-pro-front" });
 
-  return (
-    <TokenContextProvider>
-    <CartProvider>
-      <RouterProvider router={routes} />
-    </CartProvider>
-  </TokenContextProvider>
-  
-  );
+  return <RouterProvider router={routes} />;
 }
 
 export default App;
