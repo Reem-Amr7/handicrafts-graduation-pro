@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
+import { useCart } from "../../Context/CartContext";
 
 import axios from "axios";
 import styles from "./Shop.module.css";
@@ -33,8 +34,15 @@ const Shop = () => {
     category: "",
     image: null,
   });
+const { addToCart } = useCart();
 
   const navigate = useNavigate();
+const handleAddToCart = (product) => {
+  addToCart(product);
+};
+
+
+
 
   const fetchProducts = () => {
     setLoading(true);
@@ -324,11 +332,16 @@ fetchProducts();
                       <p className={styles.username}>ANN JI</p>
                       <p className={styles.postDate}>منذ 3 أيام</p>
                     </div>
-                    <img
-                      src={prof1}
-                      alt="User"
-                      className={styles.profileImage}
-                    />
+                    <div className={styles.profileWrapper}>
+  <Link to={`/profile/${p.userId}`}>
+    <img
+      src={prof1}
+      alt="User"
+      className={styles.profileImage}
+    />
+  </Link>
+</div>
+
                   </div>
 <Link to={`/product-details/${p.id}`}>
   <img
@@ -346,10 +359,25 @@ fetchProducts();
                     <h3>{p.title}</h3>
                     <p>{p.description}</p>
                     <div className={styles.productFooter}>
-                      <button className={styles.cartButton}>
-                        <i className="fa-solid fa-cart-shopping text-lg" />
-                        <span className="font-semibold">{p.price}$</span>
-                      </button>
+<button
+  onClick={() => {
+    const cartItem = {
+      id: p.id,
+      name: p.title,
+      price: Number(p.price),
+      image: p.imageOrVideo?.[0] || p.image || defaultProductImage,
+      quantity: 1,
+    };
+    addToCart(cartItem);
+    alert("تمت إضافة المنتج إلى السلة");
+  }}
+  className={styles.cartButton}
+>
+  <i className="fa-solid fa-cart-shopping text-lg" />
+  <span className="font-semibold">{p.price}$</span>
+</button>
+
+
                       <span className={styles.likes}>❤ {p.likes || 0}</span>
                     </div>
                   </div>

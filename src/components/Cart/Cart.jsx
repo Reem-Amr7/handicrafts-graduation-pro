@@ -1,58 +1,10 @@
-import React, { useState, createContext, useContext } from 'react';
+import React from "react";
+import { Link } from "react-router-dom";
+import { useCart } from "../../Context/CartContext";
+
 import styles from "./Cart.module.css";
 import product1 from "./../../assets/Screenshot 2025-02-13 210809.png";
 
-// ==== 1. CartContext داخلي  ====
-const CartContext = createContext();
-const useCart = () => useContext(CartContext);
-
-// ==== 2. Provider داخلي ====
-export const CartProvider = ({ children }) => {
-  const [cartItems, setCartItems] = useState([]);
-
-  const addToCart = (product) => {
-    setCartItems(prev => {
-      const existing = prev.find(item => item.id === product.id);
-      if (existing) {
-        return prev.map(item =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
-      } else {
-        return [...prev, { ...product, quantity: 1 }];
-      }
-    });
-  };
-
-  const increaseQuantity = (id) => {
-    setCartItems(prev =>
-      prev.map(item =>
-        item.id === id ? { ...item, quantity: item.quantity + 1 } : item
-      )
-    );
-  };
-
-  const decreaseQuantity = (id) => {
-    setCartItems(prev =>
-      prev.map(item =>
-        item.id === id ? { ...item, quantity: item.quantity - 1 } : item
-      ).filter(item => item.quantity > 0)
-    );
-  };
-
-  const removeFromCart = (id) => {
-    setCartItems(prev => prev.filter(item => item.id !== id));
-  };
-
-  return (
-    <CartContext.Provider value={{ cartItems, addToCart, increaseQuantity, decreaseQuantity, removeFromCart }}>
-      {children}
-    </CartContext.Provider>
-  );
-};
-
-// ==== 3. Cart Component ====
 export default function Cart() {
   const { cartItems, increaseQuantity, decreaseQuantity, removeFromCart } = useCart();
 
@@ -94,6 +46,13 @@ export default function Cart() {
                       +
                     </button>
                   </div>
+
+                  <button 
+                    className={styles.removeBtn}
+                    onClick={() => removeFromCart(item.id)}
+                  >
+                    حذف
+                  </button>
                 </div>
               </div>
             ))
@@ -123,11 +82,11 @@ export default function Cart() {
             
             <button className={styles.checkoutBtn}>إتمام الشراء</button>
             
-            <p className={styles.continueShopping}>أو <a href="#">مواصلة التسوق</a></p>
+            <p className={styles.continueShopping}>أو <Link to="/shop">مواصلة التسوق</Link></p>
+
           </div>
         </div>
       </div>
     </div>
   );
 }
-export { useCart };

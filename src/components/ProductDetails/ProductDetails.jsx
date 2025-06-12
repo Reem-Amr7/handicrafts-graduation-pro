@@ -3,10 +3,7 @@ import { useParams } from "react-router-dom";
 import styles from "./ProductDetails.module.css";
 import defaultProductImage from "../../assets/image.png";
 import { TokenContext } from "../../Context/TokenContext";
-
-// ✅ استيراد useCart
-import { useCart } from "../Cart/Cart"; // لو useCart في Cart.jsx
-
+import { useCart } from "../../Context/CartContext";
 
 export default function ProductDetails() {
   const { id } = useParams();
@@ -31,15 +28,15 @@ export default function ProductDetails() {
 
         const data = await response.json();
         setProduct(data);
-        setLoading(false);
       } catch (error) {
         console.error("Error fetching product:", error.message);
+      } finally {
         setLoading(false);
       }
     };
 
     fetchProduct();
-  }, [id]);
+  }, [id, token]);
 
   if (loading) return <p className={styles.loading}>جاري التحميل...</p>;
   if (!product) return <p className={styles.error}>لم يتم العثور على المنتج.</p>;
@@ -50,7 +47,7 @@ export default function ProductDetails() {
       name: product.title,
       price: Number(product.price),
       image: product.imageOrVideo?.[0] || defaultProductImage,
-      quantity: Number(quantity),
+      quantity: Number(quantity) > 0 ? Number(quantity) : 1,
     };
     addToCart(cartItem);
     alert("تمت إضافة المنتج إلى السلة");
@@ -99,3 +96,4 @@ export default function ProductDetails() {
     </div>
   );
 }
+
