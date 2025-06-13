@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
-import { FaCalendarAlt, FaThumbsUp, FaComment, FaShare, FaRedo, FaEllipsisH, FaBars, FaUserPlus, FaUserMinus } from "react-icons/fa";
+import { FaCalendarAlt, FaThumbsUp, FaComment, FaShare, FaRedo, FaEllipsisH, FaBars, FaUserPlus, FaUserMinus, FaCog, FaPlus, FaTimes } from "react-icons/fa";
 import styles from "./Profile.module.css";
 import ProfileLeftside from './ProfileLeftside';
 import NewPost from '../Home/newpost';
@@ -28,6 +28,7 @@ export default function Profile() {
   const [activeTab, setActiveTab] = useState("Posts");
   const { token } = useContext(TokenContext);
   const currentUserId = localStorage.getItem("userId");
+  const skillInputRef = useRef(null);
 
   const picKey = `profilePicture_${id}`;
   const coverKey = `coverImage_${id}`;
@@ -178,7 +179,7 @@ export default function Profile() {
 
       if (response.status === 200) {
         const userRes = await axios.get(
-         ` https://ourheritage.runasp.net/api/Users/${id}`,
+          `https://ourheritage.runasp.net/api/Users/${id}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setProfilePicture(userRes.data.profilePicture);
@@ -259,6 +260,36 @@ export default function Profile() {
     } catch (err) {
       console.error(err);
       setError("حدث خطأ أثناء إضافة المهارة.");
+      setUserSkills(userSkills); // Revert optimistic update
+    }
+  };
+
+  const handleDeleteSkill = async (skill) => {
+    if (!token) {
+      setError("لم يتم العثور على التوكن. تأكد من تسجيل الدخول.");
+      return;
+    }
+
+    // Optimistic update
+    const updatedSkills = userSkills.filter(s => s !== skill);
+    setUserSkills(updatedSkills);
+
+    try {
+      await axios.delete(
+        `https://ourheritage.runasp.net/api/Users/skills/${encodeURIComponent(skill)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Accept': '*/*',
+          },
+        }
+      );
+
+      setError(null);
+    } catch (err) {
+      console.error("Error deleting skill:", err);
+      setError("حدث خطأ أثناء حذف المهارة.");
+      setUserSkills(userSkills); // Revert optimistic update
     }
   };
 
@@ -325,6 +356,22 @@ export default function Profile() {
 
   const handleImageError = (e) => {
     e.target.src = "https://via.placeholder.com/40";
+  };
+
+  const postImages = userPosts
+    .filter(post => post.imageURL && post.imageURL !== "https://via.placeholder.com/40")
+    .map(post => ({
+      id: post.id,
+      imageURL: post.imageURL,
+    }));
+
+  const handleAddSkillClick = () => {
+    setActiveTab("Posts");
+    setTimeout(() => {
+      if (skillInputRef.current) {
+        skillInputRef.current.focus();
+      }
+    }, 0);
   };
 
   if (loading) return <p className="text-center py-8">جاري تحميل البيانات...</p>;
@@ -417,73 +464,70 @@ export default function Profile() {
                 className={`${styles.tabButton} ${activeTab === "Posts" ? styles.activeTab : ''}`}
                 onClick={() => setActiveTab("Posts")}
               >
-                Posts
+                المنشورات
               </button>
               <button
                 className={`${styles.tabButton} ${activeTab === "Pictures" ? styles.activeTab : ''}`}
                 onClick={() => setActiveTab("Pictures")}
               >
-                Pictures
+                الصور
               </button>
               <button
                 className={`${styles.tabButton} ${activeTab === "Followers" ? styles.activeTab : ''}`}
                 onClick={() => setActiveTab("Followers")}
               >
-                Followers
+                متابع
               </button>
               <button
                 className={`${styles.tabButton} ${activeTab === "Following" ? styles.activeTab : ''}`}
                 onClick={() => setActiveTab("Following")}
               >
-                Following
+                يتابع
               </button>
               <button
                 className={`${styles.tabButton} ${activeTab === "About" ? styles.activeTab : ''}`}
                 onClick={() => setActiveTab("About")}
               >
-                About
+                حول
               </button>
             </div>
           </div>
-
-          {id === currentUserId && (
-            <form onSubmit={handleAddSkills}>
-              <input 
-                type="text" 
-                value={newSkill} 
-                onChange={(e) => setNewSkill(e.target.value)} 
-                placeholder="أدخل مهارة جديدة" 
-                className="mb-2 p-2 border border-gray-300 rounded"
-              />
-              <button type="submit" className="px-4 py-2 bg-[#B22222] text-white rounded hover:bg-[#8B0000]">
-                إضافة مهارة
-              </button>
-            </form>
-          )}
-
-          <div className={styles.stats}>
-            <div>
-              <strong>المهارات:</strong>
-              <p>{userSkills.length ? userSkills.join(", ") : "لا توجد"}</p>
-            </div>
-            <div>
-              <strong>متابع:</strong>
-              <p>{followers.length}</p>
-            </div>
-            <div>
-              <strong>اتابع:</strong>
-              <p>{following.length}</p>
-            </div>
-            <div>
-              <strong>تاريخ الانضمام:</strong>
-              <p>{new Date(userData.dateJoined).toLocaleDateString()}</p>
-            </div>
-          </div>
-
-          {id === currentUserId && activeTab === "Posts" && <NewPost />}
 
           {activeTab === "Posts" && (
             <div className={styles.postsSection}>
+              <div className={styles.stats}>
+                <div>
+                  <strong>متابع:</strong>
+                  <p>{followers.length}</p>
+                </div>
+                <div>
+                  <strong>يتابع:</strong>
+                  <p>{following.length}</p>
+                </div>
+                <div>
+                  <strong>المنشورات:</strong>
+                  <p>{userPosts.length}</p>
+                </div>
+              </div>
+
+              {id === currentUserId && (
+                <form onSubmit={handleAddSkills} className="my-4">
+                  <input 
+                    type="text" 
+                    value={newSkill} 
+                    onChange={(e) => setNewSkill(e.target.value)} 
+                    placeholder="أدخل مهارة جديدة" 
+                    className="mb-2 p-2 border border-gray-300 rounded w-full"
+                    ref={skillInputRef}
+                  />
+                  <button type="submit" className="px-4 py-2 bg-[#B22222] text-white rounded hover:bg-[#8B0000]">
+                    إضافة مهارة
+                  </button>
+                </form>
+              )}
+
+              {id === currentUserId && <NewPost />}
+
               <h3 className="text-xl font-bold mb-4">منشورات المستخدم</h3>
               {userPosts.length > 0 ? userPosts.map(post => (
                 <div key={post.id} className="mb-8 p-4 bg-white shadow-md rounded-lg">
@@ -508,7 +552,7 @@ export default function Profile() {
                     </div>
                   </div>
 
-                  {post.imageURL && (
+                  {post.imageURL && post.imageURL !== "https://via.placeholder.com/40" && (
                     <div className="w-full h-96 rounded-md mb-4">
                       <img
                         src={post.imageURL}
@@ -548,7 +592,22 @@ export default function Profile() {
           {activeTab === "Pictures" && (
             <div className={styles.postsSection}>
               <h3 className="text-xl font-bold mb-4">الصور</h3>
-              <p>لم يتم إضافة صور بعد.</p>
+              {postImages.length > 0 ? (
+                <div className={styles.imagesGrid}>
+                  {postImages.map(image => (
+                    <div key={image.id} className={styles.imageCard}>
+                      <img
+                        src={image.imageURL}
+                        alt="Post Image"
+                        className={styles.postImage}
+                        onError={handleImageError}
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p>لم يتم إضافة صور بعد.</p>
+              )}
             </div>
           )}
 
@@ -600,10 +659,83 @@ export default function Profile() {
 
           {activeTab === "About" && (
             <div className={styles.postsSection}>
-              <h3 className="text-xl font-bold mb-4">حول</h3>
-              <p>لا توجد معلومات إضافية.</p>
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <h3 className="text-2xl font-bold mb-6 text-[#B22222] border-b-2 border-[#B22222] pb-2">
+                  حول {userData.fullName || `${userData.firstName} ${userData.lastName}`}
+                </h3>
+                
+                <div className="mb-8">
+                  <div className="flex items-center justify-between mb-10">
+                    <h4 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                      <FaCog className="text-[#B22222]" />
+                      المهارات
+                    </h4>
+                    {id === currentUserId && (
+                      <button
+                        onClick={handleAddSkillClick}
+                        className="text-[#B22222] px-3 py-3 hover:text-[#8B0000] flex items-center gap-4 text-lg"
+                      >
+                        <FaPlus size={20} />
+                        إضافة مهارة
+                      </button>
+                    )}
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {userSkills.length > 0 ? (
+                      userSkills.map((skill, index) => (
+                        <div 
+                          key={index} 
+                          className="flex items-center px-8 justify-between text-black mb-4 rounded-full text-center shadow-md hover:shadow-lg transition-shadow duration-200"
+                          style={{ backgroundColor: '#F5F5DC' }}
+                        >
+                          <span className='w-[900px] h-[30px] p-5 flex items-center justify-center' >{skill}</span>
+                          {id === currentUserId && (
+                            <button
+                              onClick={() => handleDeleteSkill(skill)}
+                              className="text-red-600 hover:text-red-800 mr-16 "
+                              title="حذف المهارة"
+                            >
+                              <FaTimes size={14} />
+                            </button>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="col-span-full text-gray-500 text-center py-8 italic">
+                        لا توجد مهارات مضافة بعد
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mb-6">
+                  <h4 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2 mt-16">
+                    <FaCalendarAlt className="text-[#B22222]" />
+                    معلومات الانضمام
+                  </h4>
+                  <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-4 rounded-lg border border-gray-200">
+                    <div className="flex items-center gap-3">
+                      <div className="w-3 h-3 bg-[#B22222] rounded-full"></div>
+                      <span className="text-gray-700 font-medium">
+                        انضم في: {new Date(userData.dateJoined).toLocaleDateString('ar-EG', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </span>
+                    </div>
+                    <div className="mt-2 text-sm text-gray-600">
+                      عضو منذ {Math.floor((new Date() - new Date(userData.dateJoined)) / (1000 * 60 * 60 * 24))} يوم
+                    </div>
+                  </div>
+                </div>
+
+                
+              </div>
             </div>
           )}
+
         </div>
         <div className="col-span-12 md:col-span-3">
           <ProfileLeftside userData={userData} />

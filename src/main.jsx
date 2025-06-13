@@ -29,14 +29,17 @@ import './index.css';
 import { CartProvider } from './Context/CartContext';
 import TokenContextProvider from './Context/TokenContext';
 import { UserProvider } from './Context/User Context'; // تأكد من اسم الملف الصحيح
+import { PostProvider } from './Context/PostContext.jsx';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <TokenContextProvider>
       <CartProvider>
+        <PostProvider>
         <UserProvider> {/* ✅ أضف الـ UserProvider هنا */}
           <App />
         </UserProvider>
+        </PostProvider>
       </CartProvider>
     </TokenContextProvider>
   </React.StrictMode>

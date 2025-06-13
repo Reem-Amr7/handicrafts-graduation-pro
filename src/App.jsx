@@ -11,7 +11,7 @@ import Home from './components/Home/Home';
 import Blog from './components/Blog/Blog';
 import ProductDetails from './components/ProductDetails/ProductDetails';
 import Shop from './components/Shop/Shop';
-import LiveStream from './components/LiveStream/LiveStream';
+
 import Blogdetail from './components/Blogdetails/Blogdetail';
 import PostDetails from './components/Home/Postdetails';
 import HandicraftRecommendation from './components/Recommendation/recommend';
@@ -21,6 +21,7 @@ import Cart from './components/Cart/Cart'; // ✅ غيرت الاسم هنا
 import { CartProvider } from "./Context/CartContext"; // عدّل المسار حسب مكان الملف
 // استيراد السياقات الخاصة بـ Token و Cart
 import TokenContextProvider from './Context/TokenContext';
+import ChatApp from './components/Messages/Messages';
 
 function App() {
   const routes = createBrowserRouter([
@@ -40,7 +41,6 @@ function App() {
         { path: "product-details/:id", element: <ProductDetails /> },
         { path: "shop", element: <Shop /> },
         { path: "cart", element: <Cart /> }, // ✅ استخدم Cart هنا
-        { path: "LiveStream", element: <LiveStream /> },
         { path: "Blogdetails", element: <Blogdetail /> },
         { path: "post/:postId", element: <PostDetails /> },
         { path: "recommend", element: <HandicraftRecommendation /> },
