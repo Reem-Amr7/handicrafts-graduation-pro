@@ -44,16 +44,18 @@
   }
   
   .otpInput {
-    width: 50px;
-    height: 50px;
-    text-align: center;
-    font-size: 1.5rem;
-    /* border: 1px solid #ccc; */
-    border-radius: 5px;
-    margin: 0 5px;
-    background-color: #A68B55; /* تغيير لون الخلفية */
-  color: #fff;
-  }
+    direction: ltr;  
+  width: 50px;
+  height: 50px;
+  text-align: center;
+  font-size: 1.5rem;
+  border-radius: 5px;
+  margin: 0 5px;
+  background-color: #A68B55;
+  color: #7d0808;
+  caret-color: white; /* ✅ إظهار مؤشر الكتابة */
+}
+
   .otpInput:focus {
     border-color: #A68B55; /* تغيير لون الحدود عند التركيز */
     box-shadow: 0 0 0  #A68B55; /* إضافة ظل لتحديد التركيز */

@@ -8,6 +8,20 @@ import { useNavigate } from "react-router-dom";
 import { TokenContext } from "../../Context/TokenContext";
 import prof1 from "/src/assets/prof.jpg";
 import defaultProductImage from "/src/assets/product1.jpg";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import relativeTime from "dayjs/plugin/relativeTime";
+import "dayjs/locale/ar"; // لو حابب تظهر النتيجة بالعربي
+import timezone from 'dayjs/plugin/timezone';
+
+// تفعيل الإضافات
+dayjs.extend(utc);
+dayjs.extend(timezone);
+dayjs.extend(utc);
+dayjs.extend(relativeTime);
+dayjs.locale("ar"); // أو "en" لو بالإنجليزي
+
+
 
 const PRODUCTS_PER_PAGE = 9;
 const categories = ["الدوس", "المعمار", "منتجات الخاصة", "السجاد الديوني"];
@@ -27,6 +41,8 @@ const Shop = () => {
   });
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [userMap, setUserMap] = useState({});
+
   const [newProduct, setNewProduct] = useState({
     name: "",
     description: "",
@@ -72,10 +88,60 @@ setAllProducts(uniqueProducts);
       .catch((err) => console.error("API Error:", err))
       .finally(() => setLoading(false));
   };
+const fetchUserData = async (userId) => {
+  if (userMap[userId]) return; // لو البيانات موجودة، ما تعملش حاجة
+
+  try {
+    const res = await axios.get(
+      `https://ourheritage.runasp.net/api/Users/${userId}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    setUserMap((prev) => ({
+      ...prev,
+      [userId]: res.data,
+    }));
+  } catch (err) {
+    console.error("فشل في تحميل بيانات المستخدم:", err);
+  }
+};
+
+const timeAgoCustom = (utcDateString) => {
+  const date = dayjs.utc(utcDateString).local(); // تحويل التاريخ من UTC إلى توقيت الجهاز المحلي
+  const now = dayjs();
+
+  const diffInMinutes = now.diff(date, 'minute');
+  const diffInHours = now.diff(date, 'hour');
+  const diffInDays = now.diff(date, 'day');
+  const diffInMonths = now.diff(date, 'month');
+
+  if (diffInMinutes < 1) {
+    return 'منذ لحظات';
+  } else if (diffInMinutes < 60) {
+    return `منذ ${diffInMinutes} دقيقة${diffInMinutes === 1 ? '' : ''}`;
+  } else if (diffInHours < 24) {
+    return `منذ ${diffInHours} ساعة${diffInHours === 1 ? '' : ''}`;
+  } else if (diffInDays < 30) {
+    return `منذ ${diffInDays} يوم${diffInDays === 1 ? '' : ''}`;
+  } else {
+    return `منذ ${diffInMonths} شهر${diffInMonths === 1 ? '' : ''}`;
+  }
+};
+
+
+
+
 
   useEffect(() => {
     if (token) fetchProducts();
   }, [token]);
+useEffect(() => {
+  if (token && allProducts.length) {
+    const userIds = Array.from(new Set(allProducts.map(p => p.userId)));
+    userIds.forEach((id) => fetchUserData(id));
+  }
+}, [allProducts, token]);
 
   // كل ما يتغير appliedFilters نرجع للصفحة الأولى
   useEffect(() => {
@@ -327,22 +393,35 @@ fetchProducts();
             <div className={styles.productsGrid}>
               {displayedProducts.map((p) => (
                 <div key={p.id} className={styles.productPost}>
-                  <div className={styles.postHeader}>
-                    <div>
-                      <p className={styles.username}>ANN JI</p>
-                      <p className={styles.postDate}>منذ 3 أيام</p>
-                    </div>
-                    <div className={styles.profileWrapper}>
-  <Link to={`/profile/${p.userId}`}>
-    <img
-      src={prof1}
-      alt="User"
-      className={styles.profileImage}
-    />
-  </Link>
+                 <div className={styles.postHeader}>
+                  
+  <div>
+    <p className={styles.username}>
+  {userMap[p.userId]
+    ? `${userMap[p.userId].firstName} ${userMap[p.userId].lastName}`
+    : "مستخدم غير معروف"}
+</p>
+
+ <p className={styles.postDate}>
+  {p.dateAdded ? timeAgoCustom(p.dateAdded) : "تاريخ غير متاح"}
+</p>
+
+
+
+  </div>
+  
+  <div className={styles.profileWrapper}>
+    <Link to={`/profile/${p.userId}`}>
+      <img
+  src={userMap[p.userId]?.profilePicture || prof1}
+  alt="User"
+  className={styles.profileImage}
+/>
+
+    </Link>
+  </div>
 </div>
 
-                  </div>
 <Link to={`/product-details/${p.id}`}>
   <img
     src={p.imageOrVideo?.[0] || defaultProductImage}
