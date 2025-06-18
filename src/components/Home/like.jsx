@@ -1,8 +1,8 @@
-import { FaHeart } from 'react-icons/fa';
+import { FaHeart, FaThumbsUp } from 'react-icons/fa';
 import { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { TokenContext } from '../../Context/TokenContext';
-
+import styles from "../Profile/Profile.module.css";
 export default function Like({ post }) {
   const [likeCount, setLikeCount] = useState(post.likeCount || 0);
   const [isLiked, setIsLiked] = useState(false);
@@ -44,9 +44,16 @@ export default function Like({ post }) {
   };
 
   return (
-    <div className="flex items-center gap-1 cursor-pointer" onClick={toggleLike}>
-      <FaHeart className={isLiked ? 'text-red-500' : 'text-gray-400'} />
-      <span className="text-sm">{likeCount}</span>
-    </div>
+    // <div className="flex items-center gap-1 cursor-pointer" onClick={toggleLike}>
+    //   <FaHeart className={isLiked ? 'text-red-500' : 'text-gray-400'} />
+    //   <span className="text-sm">{likeCount}</span>
+    // </div>
+
+
+
+ <div className={`flex items-center gap-1 cursor-pointer ${styles.postActionButton}`} onClick={toggleLike}>
+                        <FaThumbsUp  className={isLiked ? 'text-red-500' : 'text-gray-400' }  /><span className='text-xl mr-2'>إعجاب</span>
+                         <span className="text-xl mr-2 mt-1">{likeCount}</span>
+                      </div>
   );
 }

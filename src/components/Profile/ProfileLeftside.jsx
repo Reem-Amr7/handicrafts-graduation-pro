@@ -1,8 +1,12 @@
+import React, { useEffect, useState, useContext } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { Link } from 'react-router-dom';
 import L from 'leaflet';
+import axios from 'axios';
 import 'leaflet/dist/leaflet.css';
-import { useEffect, useState } from 'react';
 import markerIconPng from "leaflet/dist/images/marker-icon.png";
+import { FaStar } from "react-icons/fa";
+import { TokenContext } from "../../Context/TokenContext";
 
 function FlyToCity({ coords }) {
   const map = useMap();
@@ -14,9 +18,14 @@ function FlyToCity({ coords }) {
   return null;
 }
 
-export default function ProfileLeftside() {
+export default function ProfileLeftside({ userData, suggestedFriends, followedCraftsmen }) {
   const [userCity, setUserCity] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [localFollowedCraftsmen, setLocalFollowedCraftsmen] = useState(followedCraftsmen || []);
+  const [error, setError] = useState(null);
+  const [followMessage, setFollowMessage] = useState({});
+  const { token } = useContext(TokenContext);
+  const currentUserId = localStorage.getItem("userId");
 
   const cityNames = {
     cairo: "القاهرة، مصر",
@@ -121,6 +130,10 @@ export default function ProfileLeftside() {
     }
   }, []);
 
+  useEffect(() => {
+    setLocalFollowedCraftsmen(followedCraftsmen || []);
+  }, [followedCraftsmen]);
+
   const handleChangeCity = (e) => {
     const city = e.target.value;
     setUserCity(city);
@@ -129,10 +142,87 @@ export default function ProfileLeftside() {
     }
   };
 
+  const handleToggleFollow = async (friendId) => {
+    if (!friendId || !token || !currentUserId) {
+      setError("معرف المستخدم أو التوكن غير صالح.");
+      return;
+    }
+
+    const isFollowing = localFollowedCraftsmen.includes(friendId);
+    const previousFollowedCraftsmen = [...localFollowedCraftsmen];
+
+    // Optimistic update
+    setLocalFollowedCraftsmen(
+      isFollowing
+        ? localFollowedCraftsmen.filter((id) => id !== friendId)
+        : [...localFollowedCraftsmen, friendId]
+    );
+
+    try {
+      const endpoint = isFollowing
+        ? `https://ourheritage.runasp.net/api/Follow/unfollow/${parseInt(currentUserId)}/${parseInt(friendId)}`
+        : `https://ourheritage.runasp.net/api/Follow/follow`;
+
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      };
+
+      const body = { followerId: parseInt(currentUserId), followingId: parseInt(friendId) };
+
+      const response = isFollowing
+        ? await axios.delete(endpoint, { ...config, data: body })
+        : await axios.post(endpoint, body, config);
+
+      if (response.status !== 200 && response.status !== 201) {
+        throw new Error("Unexpected response status");
+      }
+
+      if (!isFollowing) {
+        // Show "تمت المتابعة" for 2 seconds
+        setFollowMessage((prev) => ({ ...prev, [friendId]: "تمت المتابعة" }));
+        setTimeout(() => {
+          setFollowMessage((prev) => ({ ...prev, [friendId]: undefined }));
+        }, 2000);
+      }
+
+      setError(null);
+    } catch (err) {
+      console.error("Follow/Unfollow error:", err);
+      // Revert optimistic update
+      setLocalFollowedCraftsmen(previousFollowedCraftsmen);
+
+      if (err.response?.status === 400 && err.response?.data?.message === "You are already following this user.") {
+        setLocalFollowedCraftsmen([...localFollowedCraftsmen, friendId]);
+      } else if (err.response?.status === 400 && err.response?.data?.message === "Follower or following user not found.") {
+        setError("المستخدم المتابع أو المستخدم الذي يتم متابعته غير موجود.");
+      } else if (err.response?.status === 400) {
+        setError(err.response?.data?.message || "طلب غير صالح. تحقق من معرف المستخدم أو حاول مرة أخرى.");
+      } else if (err.response?.status === 401) {
+        setError("غير مصرح. تأكد من تسجيل الدخول.");
+      } else {
+        setError("حدث خطأ أثناء تحديث حالة المتابعة. حاول مرة أخرى لاحقًا.");
+      }
+    }
+  };
+
   const selectedCoords = userCity ? cityCoordinates[userCity] : [30.5, 34.5];
 
   return (
-    <aside className="col-span-4 mr-3 w-[350px] ml-3 p-8">
+    <aside className="col-span-4 mr-3 w-[350px] ml-3 p-8 sticky top-0 max-h-[100vh] overflow-y-auto scrollbar-hidden">
+      <style>
+        {`
+          .scrollbar-hidden {
+            scrollbar-width: none; /* Firefox */
+          }
+          .scrollbar-hidden::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Edge */
+          }
+        `}
+      </style>
+      {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
       <div className="p-5 mt-8 bg-white shadow-md rounded">
         <h2 className="text-lg font-semibold mb-4">مكان الحرفي على الخريطة</h2>
 
@@ -158,7 +248,7 @@ export default function ProfileLeftside() {
           >
             <TileLayer
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a>'
+              attribution='© <a href="http://osm.org/copyright">OpenStreetMap</a>'
             />
             {userCity && (
               <>
@@ -183,6 +273,54 @@ export default function ProfileLeftside() {
             📍 الحرفي من: {cityNames[userCity]}
           </p>
         )}
+      </div>
+
+      {/* Suggested Friends Card */}
+      <div className="sidebar-card bg-white rounded shadow-md p-3 border-t-4 border-[#A0522D] mt-4">
+        <h3 className="sidebar-title text-base mb-3 text-[#8B4513] relative pb-2 flex items-center">
+          <FaStar className="mr-2 text-[#D2B48C]" />
+          أصدقاء مقترحون
+        </h3>
+        
+        <div className="trending-craftsmen flex flex-col gap-2">
+          {suggestedFriends.length === 0 ? (
+            <p className="text-xs text-center text-gray-500">لا توجد أصدقاء مقترحون حالياً</p>
+          ) : (
+            suggestedFriends.map(friend => (
+              <div 
+                key={friend.id} 
+                className="craftsman-card flex items-center p-2 rounded transition border hover:bg-[#f0f0e0] hover:-translate-y-[2px]"
+              >
+                <img
+                  src={friend.profilePicture ? friend.profilePicture : '/default-avatar.png'}
+                  alt={`${friend.fullName || `${friend.firstName} ${friend.lastName}`}`}
+                  className="w-8 h-8 rounded-full object-cover mr-2 border-2 border-[#D2B48C]"
+                  loading="lazy"
+                />
+                <div className="flex-1">
+                  <Link to={`/profile/${friend.id}`}>
+                    <h4 className="text-black font-semibold text-sm hover:text-[#8B4513] transition-colors">
+                      {friend.fullName || `${friend.firstName} ${friend.lastName}`}
+                    </h4>
+                  </Link>
+                  <p className="text-xs text-red-500">
+                    {friend.skills && friend.skills.length > 0 ? friend.skills[0] : 'حرفة غير محددة'}
+                  </p>
+                </div>
+                <button 
+                  className={`follow-btn px-3 py-1 rounded-full text-xs cursor-pointer transition border ${
+                    followMessage[friend.id] ? 'bg-green-600 text-white border-green-600' :
+                    localFollowedCraftsmen.includes(friend.id) ? 'bg-[#8B4513] text-white border-[#8B4513]' :
+                    'bg-transparent text-[#8B4513] border-[#8B4513]'
+                  }`}
+                  onClick={() => handleToggleFollow(friend.id)}
+                >
+                  {followMessage[friend.id] || (localFollowedCraftsmen.includes(friend.id) ? 'متابع' : 'تابع')}
+                </button>
+              </div>
+            ))
+          )}
+        </div>
       </div>
     </aside>
   );

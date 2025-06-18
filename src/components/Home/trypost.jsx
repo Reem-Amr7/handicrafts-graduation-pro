@@ -257,22 +257,24 @@ export default function Posty() {
                                     </div>
                                 )}
                             </div>
-
-                            <div className="post-actions flex border-t pt-3">
-                                <Like post={post} />
-                                <div
-                                    className="post-action flex items-center mr-3 text-gray-600 cursor-pointer transition hover:text-[#A0522D] text-sm"
-                                    onClick={() => toggleComments(post.id)}
-                                >
-                                    <span>{post.commentCount || 0}</span>
-                                    <FaComment className="ml-1 text-gray-500" />
+                            <p className="border-b-2 border-black pb-2 mb-2">{post.content || "بدون محتوى"}</p>
+                            <div className="flex justify-between items-center mt-4 text-red-900">
+                                <div className="flex gap-8 items-center">
+                                    <Like post={post} />
+                                    <div
+                                        className="post-action flex items-center mr-3 text-gray-600 cursor-pointer transition hover:text-[#A0522D] text-sm"
+                                        onClick={() => toggleComments(post.id)}
+                                    >
+                                       
+                                        <FaComment className="ml-1 text-gray-500" /><span>تعليق</span>
+                                         <span>{post.commentCount || 0}</span>
+                                    </div>
                                 </div>
                                 <div className="post-action flex items-center text-gray-600 cursor-pointer transition hover:text-[#A0522D] text-sm">
                                     <Repost post={post} userId={post.userId || 0} onSuccess={() => handleRepostSuccess(post.id)} />
                                     <span>{post.reposts?.length || 0}</span>
                                 </div>
                             </div>
-
                             {openComments[post.id] && <Comment post={post} />}
                         </div>
 

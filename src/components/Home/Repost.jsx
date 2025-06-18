@@ -1,8 +1,8 @@
 import { useState, useContext } from "react";
 import axios from "axios";
-import { FaTimes, FaShareAlt } from "react-icons/fa";
+import { FaTimes, FaShareAlt, FaRedo } from "react-icons/fa";
 import { TokenContext } from "../../Context/TokenContext";
-
+import styles from "../Profile/Profile.module.css";
 export default function Repost({ post, userId = 0, onSuccess }) {
     const { token } = useContext(TokenContext);
     const [repostModalOpen, setRepostModalOpen] = useState(false);
@@ -55,14 +55,12 @@ export default function Repost({ post, userId = 0, onSuccess }) {
 
     return (
         <>
-            <div
-                className="post-action flex items-center text-gray-600 cursor-pointer transition hover:text-[#A0522D] text-sm"
-                onClick={openRepostModal}
-            >
-                <FaShareAlt className="ml-1 text-gray-500" />
-                <span>إعادة نشر</span>
-            </div>
+           
 
+
+   <div className={`flex items-center gap-2 cursor-pointer ${styles.postActionButton}`} onClick={openRepostModal}>
+                      <span className="text-xl ml-1">إعادة نشر</span><FaRedo />
+                    </div>
             {repostModalOpen && (
                 <div
                     className="fixed inset-0 bg-[#f5f5dc] bg-opacity-60 flex justify-center items-center z-50"
@@ -72,10 +70,10 @@ export default function Repost({ post, userId = 0, onSuccess }) {
                         className="bg-white w-[90%] max-w-md p-6 rounded-lg shadow-2xl"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-lg font-semibold text-[#5C4033]">إعادة نشر</h3>
+                        <div className="flex justify-between items-center mb-4 text-2xl">
+                            <h3 className="text-lg font-bold text-[#5C4033]">إعادة نشر</h3>
                             <FaTimes
-                                className="text-gray-400 hover:text-gray-700 cursor-pointer"
+                                className=" text-gray-400 hover:text-gray-700 cursor-pointer text-2xl"
                                 onClick={closeRepostModal}
                             />
                         </div>
@@ -129,7 +127,7 @@ export default function Repost({ post, userId = 0, onSuccess }) {
 
                         <div className="flex justify-end">
                             <button
-                                className="bg-[#B22222] text-white px-4 py-2 rounded hover:bg-[#8B4513]"
+                                className="bg-[#B22222] text-xl text-white px-4 py-2 rounded hover:bg-[#8B4513]"
                                 onClick={handleRepost}
                             >
                                 إعادة نشر

@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
-import { FaCalendarAlt, FaThumbsUp, FaComment, FaShare, FaRedo, FaEllipsisH, FaBars, FaUserPlus, FaUserMinus, FaCog, FaPlus, FaTimes } from "react-icons/fa";
+import { FaCalendarAlt, FaThumbsUp, FaComment, FaShare, FaRedo, FaEllipsisH, FaBars, FaUserPlus, FaUserMinus, FaCog, FaPlus, FaTimes, FaStar } from "react-icons/fa";
 import styles from "./Profile.module.css";
 import ProfileLeftside from './ProfileLeftside';
 import NewPost from '../Home/newpost';
 import PostSettings from '../Home/postSetting';
 import { TokenContext } from "../../Context/TokenContext";
+import Like from '../Home/like';
+import Comment from '../Home/comment';
+import Repost from '../Home/Repost';
 
 export default function Profile() {
   const { id } = useParams();
@@ -29,6 +32,9 @@ export default function Profile() {
   const { token } = useContext(TokenContext);
   const currentUserId = localStorage.getItem("userId");
   const skillInputRef = useRef(null);
+  const [suggestedFriends, setSuggestedFriends] = useState([]);
+  const [followedCraftsmen, setFollowedCraftsmen] = useState([]);
+  const [openComments, setOpenComments] = useState({});
 
   const picKey = `profilePicture_${id}`;
   const coverKey = `coverImage_${id}`;
@@ -39,7 +45,6 @@ export default function Profile() {
         `https://ourheritage.runasp.net/api/Users/${userId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      console.log(`Fetched profile picture for user ${userId}:`, res.data.profilePicture);
       return res.data.profilePicture || "https://via.placeholder.com/40";
     } catch (err) {
       console.error(`Error fetching profile picture for user ${userId}:`, err);
@@ -123,7 +128,6 @@ export default function Profile() {
             Authorization: `Bearer ${token}`
           }
         });
-
         setUserSkills(response.data);
       } catch (err) {
         console.error(err);
@@ -131,7 +135,22 @@ export default function Profile() {
       }
     };
 
+    const fetchSuggestedFriends = async () => {
+      try {
+        const res = await axios.get('https://ourheritage.runasp.net/api/Users/suggested-friends', {
+          headers: {
+            accept: '*/*',
+            Authorization: `Bearer ${token}`
+          },
+        });
+        setSuggestedFriends(res.data);
+      } catch (error) {
+        console.error("خطأ في جلب الأصدقاء المقترحين:", error);
+      }
+    };
+
     fetchSkills();
+    fetchSuggestedFriends();
   }, [token]);
 
   useEffect(() => {
@@ -147,10 +166,7 @@ export default function Profile() {
           : Promise.resolve([followingUser.id, profilePictures[followingUser.id]])
       );
       const pics = Object.fromEntries(await Promise.all([...followerPromises, ...followingPromises]));
-      setProfilePictures(prev => {
-        console.log("Updated profile pictures:", { ...prev, ...pics });
-        return { ...prev, ...pics };
-      });
+      setProfilePictures(prev => ({ ...prev, ...pics }));
     };
 
     if (followers.length > 0 || following.length > 0) {
@@ -270,7 +286,6 @@ export default function Profile() {
       return;
     }
 
-    // Optimistic update
     const updatedSkills = userSkills.filter(s => s !== skill);
     setUserSkills(updatedSkills);
 
@@ -298,13 +313,6 @@ export default function Profile() {
       setError("معرف المستخدم أو التوكن غير صالح.");
       return;
     }
-
-    console.log("Attempting to follow/unfollow with:", {
-      followerId: currentUserId,
-      followingId: id,
-      token: token.substring(0, 10) + "...",
-      action: isFollowing ? "unfollow" : "follow"
-    });
 
     try {
       const endpoint = isFollowing 
@@ -338,7 +346,6 @@ export default function Profile() {
       }
     } catch (err) {
       console.error("Follow/Unfollow error:", err);
-      console.error("Error response data:", err.response?.data);
       if (err.response?.status === 400 && err.response?.data?.message === "You are already following this user.") {
         setIsFollowing(true);
         localStorage.setItem(`followStatus_${id}`, JSON.stringify(true));
@@ -354,8 +361,46 @@ export default function Profile() {
     }
   };
 
+  const toggleFollow = (friendId) => {
+    if (followedCraftsmen.includes(friendId)) {
+      setFollowedCraftsmen(followedCraftsmen.filter(item => item !== friendId));
+    } else {
+      setFollowedCraftsmen([...followedCraftsmen, friendId]);
+    }
+  };
+
   const handleImageError = (e) => {
     e.target.src = "https://via.placeholder.com/40";
+  };
+
+  const toggleComments = (postId) => {
+    setOpenComments((prev) => ({
+      ...prev,
+      [postId]: !prev[postId],
+    }));
+  };
+
+  const handleRepostSuccess = async (culturalArticleId) => {
+    try {
+      const postsRes = await axios.get(
+        `https://ourheritage.runasp.net/api/Articles`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params: {
+            PageIndex: 1,
+            PageSize: 100,
+            UserId: id,
+          },
+        }
+      );
+  
+      if (Array.isArray(postsRes.data.items)) {
+        setUserPosts(postsRes.data.items.filter((p) => p.userId == id));
+      }
+    } catch (err) {
+      console.error("Error refreshing posts after repost:", err);
+      setError("حدث خطأ أثناء تحديث المنشورات.");
+    }
   };
 
   const postImages = userPosts
@@ -400,7 +445,7 @@ export default function Profile() {
                 display: 'none',
                 position: 'absolute',
                 top: 0,
-                left: 0,
+                left: '0px',
                 width: '100%',
                 height: '100%',
                 opacity: 0,
@@ -568,20 +613,22 @@ export default function Profile() {
 
                   <div className="flex justify-between items-center mt-4 text-red-900">
                     <div className="flex gap-8 items-center">
-                      <div className={`flex items-center gap-1 cursor-pointer ${styles.postActionButton}`}>
-                        <FaThumbsUp /><span>إعجاب</span>
-                      </div>
-                      <div className={`flex items-center gap-1 cursor-pointer ${styles.postActionButton}`}>
-                        <FaComment /><span>تعليق</span>
-                      </div>
-                      <div className={`flex items-center gap-1 cursor-pointer ${styles.postActionButton}`}>
-                        <FaShare /><span>مشاركة</span>
+                      <Like post={post} />
+                      <div
+                        className="post-action flex items-center mr-3 text-gray-600 cursor-pointer transition hover:text-[#A0522D] text-sm"
+                        onClick={() => toggleComments(post.id)}
+                      >
+                       
+                        <FaComment className="ml-1 text-gray-500 text-xl" /><span className='text-xl'>تعليق</span>
+                         <span className='text-xl mr-2 mt-1'>{post.commentCount || 0}</span>
                       </div>
                     </div>
-                    <div className={`flex items-center gap-2 cursor-pointer ${styles.postActionButton}`}>
-                      <span>إعادة نشر</span><FaRedo />
+                    <div className="post-action flex items-center text-gray-600 cursor-pointer transition hover:text-[#A0522D] text-sm">
+                      <Repost post={post} userId={parseInt(currentUserId) || 0} onSuccess={() => handleRepostSuccess(post.id)} />
+                      <span className='text-xl mr-2'>{post.reposts?.length || 0}</span>
                     </div>
                   </div>
+                  {openComments[post.id] && <Comment post={post} />}
                 </div>
               )) : (
                 <p>لا توجد منشورات.</p>
@@ -730,15 +777,17 @@ export default function Profile() {
                     </div>
                   </div>
                 </div>
-
-                
               </div>
             </div>
           )}
-
         </div>
         <div className="col-span-12 md:col-span-3">
-          <ProfileLeftside userData={userData} />
+          <ProfileLeftside 
+            userData={userData} 
+            suggestedFriends={suggestedFriends} 
+            followedCraftsmen={followedCraftsmen} 
+            toggleFollow={toggleFollow}
+          />
         </div>
       </div>
     </div>
