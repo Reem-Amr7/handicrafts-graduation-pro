@@ -1,3 +1,4 @@
+
 import axios from "axios";
 import { TokenContext } from "../../Context/TokenContext";
 import React, { useState, useContext, useEffect } from "react";
@@ -9,17 +10,40 @@ export default function NewPost() {
   const [postData, setPostData] = useState({
     title: "",
     content: "",
-    images: null,   // <-- لاحظي هنا الصور تبتدي null مش مصفوفة
-    categoryId: "",
+    images: null,
+    categoryId: "", // سيحتوي على id الفئة
     userId: "",
   });
+  const [categories, setCategories] = useState([]); // لحفظ الفئات من API
 
   useEffect(() => {
     const storedUserId = localStorage.getItem("userId");
     if (storedUserId) {
       setPostData((prev) => ({ ...prev, userId: storedUserId }));
     }
-  }, []);
+
+    // جلب الفئات من API
+    const fetchCategories = async () => {
+      try {
+        const res = await axios.get("https://ourheritage.runasp.net/api/Categories", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+          params: {
+            PageIndex: 1,
+            PageSize: 10,
+          },
+          timeout: 20000,
+        });
+        setCategories(res.data.items || []);
+      } catch (error) {
+        console.error("Error fetching categories:", error.response?.data || error);
+      }
+    };
+
+    if (token) fetchCategories(); // جلب الفئات فقط إذا كان هناك توكن
+  }, [token]);
 
   async function addNewPost(formData) {
     try {
@@ -36,6 +60,7 @@ export default function NewPost() {
       );
       console.log("Post created successfully:", res.data);
       setIsFormVisible(false);
+      setPostData({ title: "", content: "", images: null, categoryId: "", userId: storedUserId }); // إعادة تعيين الحقول
     } catch (error) {
       console.error("Error creating post:", error.response?.data || error);
     }
@@ -65,7 +90,6 @@ export default function NewPost() {
       formData.append("CategoryId", postData.categoryId);
     }
 
-    // ✨ فقط لو فيه صور، نضيفها
     if (postData.images) {
       for (let i = 0; i < postData.images.length; i++) {
         formData.append("Images", postData.images[i]);
@@ -122,14 +146,22 @@ export default function NewPost() {
                 />
               </div>
 
-              <input
-                type="text"
-                name="categoryId"
-                placeholder="معرف الفئة (اختياري)"
-                value={postData.categoryId}
-                onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded-md mt-2 text-right"
-              />
+              <div className="mt-2">
+                <label className="block text-gray-600 text-sm mb-1 text-right">اختر الفئة:</label>
+                <select
+                  name="categoryId"
+                  value={postData.categoryId}
+                  onChange={handleChange}
+                  className="w-full p-2 border border-gray-300 rounded-md mt-1 text-right"
+                >
+                  <option value="">بدون فئة</option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
               <div className="flex justify-between mt-4">
                 <button

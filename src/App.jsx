@@ -22,7 +22,10 @@ import { CartProvider } from "./Context/CartContext"; // عدّل المسار �
 // استيراد السياقات الخاصة بـ Token و Cart
 import TokenContextProvider from './Context/TokenContext';
 import ChatApp from './components/Messages/Messages';
-
+import AdminDashboard from './components/Admin Dashboard/admin'
+import PopularArticles from './components/Admin Dashboard/popularArticles'
+import AllHandicrafts from './components/Admin Dashboard/totalHandicrafts'
+import TopUsers from './components/Admin Dashboard/topUsers'
 function App() {
   const routes = createBrowserRouter([
     {
@@ -47,6 +50,11 @@ function App() {
         { path: "home2", element: <HandicraftsHomePage /> },
         { path: "profile/:id", element: <Profile /> },
         {path:"chat",element:<ChatApp/>},
+        { path: "admin", element: <AdminDashboard /> },
+        { path: "Populararticles", element: <PopularArticles /> },
+         {path: "/handicrafts", element: <AllHandicrafts />,},
+        {path:"/top-users" ,element:<TopUsers />},
+
         { path: "*", element: <Navigate to="/login" replace /> },
       ],
     },

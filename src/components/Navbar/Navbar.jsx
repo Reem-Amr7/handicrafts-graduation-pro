@@ -123,6 +123,8 @@ export default function Navbar() {
           <nav className="hidden md:block">
             <ul className="flex flex-row-reverse gap-6">
               <li><Link to="/recommend" className="hover:bg-white/20 py-1 px-2 rounded">عن المنصة</Link></li>
+                            <li><Link to="/admin" className="hover:bg-white/20 py-1 px-2 rounded"> المنصة</Link></li>
+
               <li><Link to="/home2" className="hover:bg-white/20 py-1 px-2 rounded">الحرفيين</Link></li>
               <li><Link to="/shop" className="hover:bg-white/20 py-1 px-2 rounded">المتجر</Link></li>
               <li><Link to="/home" className="hover:bg-white/20 py-1 px-2 rounded">المجتمع</Link></li>
