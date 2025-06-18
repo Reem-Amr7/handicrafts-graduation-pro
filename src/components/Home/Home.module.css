@@ -62,3 +62,20 @@ h4{
   width: 500px;
   max-width: 100%;
 }
+
+
+
+.postActionButton {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  transition: color 0.2s;
+}
+.postActionButton:hover {
+  color: #a0522d;
+}
+
+.postActionButton:hover {
+  color: #d2b48c;
+}
