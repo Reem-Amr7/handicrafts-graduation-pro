@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../../Context/CartContext";
@@ -8,25 +9,49 @@ import { useNavigate } from "react-router-dom";
 import { TokenContext } from "../../Context/TokenContext";
 import prof1 from "/src/assets/prof.jpg";
 import defaultProductImage from "/src/assets/product1.jpg";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import relativeTime from "dayjs/plugin/relativeTime";
+import "dayjs/locale/ar";
+import timezone from 'dayjs/plugin/timezone';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+dayjs.extend(relativeTime);
+dayjs.locale("ar");
 
 const PRODUCTS_PER_PAGE = 9;
-const categories = ["الدوس", "المعمار", "منتجات الخاصة", "السجاد الديوني"];
-const countries = ["مصر", "السعودية", "المغرب", "تونس", "الجزائر"];
+
+// تعريف الفئات بالأسماء الإنجليزية كما في قاعدة البيانات
+const categories = [
+  { id: 1, name: "الدوس" },
+  { id: 2, name: "Woodworking" },
+  { id: 3, name: "Embroidery" },
+  { id: 4, name: "Metalworking" }
+];
+
+// كائن للتعيين بين الـ IDs والأسماء العربية
+const categoryNames = {
+  1: "الدوس",
+  2: "المعمار",
+  3: "منتجات الخاصة",
+  4: "السجاد الديوني"
+};
 
 const Shop = () => {
   const { token } = useContext(TokenContext);
   const [allProducts, setAllProducts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedCategories, setSelectedCategories] = useState([]);
-  const [selectedCountries, setSelectedCountries] = useState([]);
   const [priceRange, setPriceRange] = useState(405);
   const [appliedFilters, setAppliedFilters] = useState({
     categories: [],
-    countries: [],
     price: 405,
   });
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [userMap, setUserMap] = useState({});
+
   const [newProduct, setNewProduct] = useState({
     name: "",
     description: "",
@@ -34,37 +59,32 @@ const Shop = () => {
     category: "",
     image: null,
   });
-const { addToCart } = useCart();
-
+  
+  const { addToCart } = useCart();
   const navigate = useNavigate();
-const handleAddToCart = (product) => {
-  addToCart(product);
-};
-
-
-
+  
+  const handleAddToCart = (product) => {
+    addToCart(product);
+  };
 
   const fetchProducts = () => {
     setLoading(true);
     axios
-      // نجيب كل المنتجات دفعة وحدة بتحديد pageSize كبير
       .get(
         "https://ourheritage.runasp.net/api/HandiCrafts?page=1&pageSize=1000",
         { headers: { Authorization: `Bearer ${token}` } }
       )
       .then((res) => {
         if (Array.isArray(res.data.items)) {
-          // رتب من الأحدث للأقدم
           const uniqueMap = new Map();
-res.data.items.forEach((item) => {
-  const key = `${item.title}-${item.description}`;
-  if (!uniqueMap.has(key)) {
-    uniqueMap.set(key, item);
-  }
-});
-const uniqueProducts = Array.from(uniqueMap.values()).sort((a, b) => b.id - a.id);
-setAllProducts(uniqueProducts);
-;
+          res.data.items.forEach((item) => {
+            const key = `${item.title}-${item.description}`;
+            if (!uniqueMap.has(key)) {
+              uniqueMap.set(key, item);
+            }
+          });
+          const uniqueProducts = Array.from(uniqueMap.values()).sort((a, b) => b.id - a.id);
+          setAllProducts(uniqueProducts);
         } else {
           setAllProducts([]);
         }
@@ -72,12 +92,112 @@ setAllProducts(uniqueProducts);
       .catch((err) => console.error("API Error:", err))
       .finally(() => setLoading(false));
   };
+  
+  const fetchUserData = async (userId) => {
+    if (userMap[userId]) return;
+
+    try {
+      const res = await axios.get(
+        `https://ourheritage.runasp.net/api/Users/${userId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setUserMap((prev) => ({
+        ...prev,
+        [userId]: res.data,
+      }));
+    } catch (err) {
+      console.error("فشل في تحميل بيانات المستخدم:", err);
+    }
+  };
+
+ // ... بقية الكود ...
+
+const timeAgoCustom = (utcDateString) => {
+  if (!utcDateString) return "تاريخ غير متاح";
+  
+  try {
+    // إضافة وقت افتراضي إذا كان التاريخ فقط بدون وقت
+    let dateStr = utcDateString;
+    if (dateStr.length === 10) {
+      // استخدام وقت السيرفر الحالي بدلاً من وقت منتصف الليل
+      dateStr += "T" + new Date().toISOString().substring(11, 19) + "Z";
+    }
+
+    // استخدام التوقيت العالمي الموحد (UTC) للتاريخ الوارد
+    const date = dayjs.utc(dateStr);
+    if (!date.isValid()) return "تاريخ غير صالح";
+    
+    // الحصول على الوقت الحالي بالتوقيت العالمي الموحد (UTC)
+    const now = dayjs.utc();
+    const diffInMilliseconds = now.diff(date);
+    
+    // تحويل الفروق إلى وحدات زمنية
+    const diffInSeconds = Math.floor(diffInMilliseconds / 1000);
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    const diffInDays = Math.floor(diffInHours / 24);
+    const diffInWeeks = Math.floor(diffInDays / 7);
+    const diffInMonths = Math.floor(diffInDays / 30);
+    const diffInYears = Math.floor(diffInMonths / 12);
+  
+    // حساب دقيق مع مراعاة اللغة العربية
+    if (diffInSeconds < 5) {
+      return 'الآن';
+    } else if (diffInSeconds < 60) {
+      return `منذ ${diffInSeconds} ثانية`;
+    } else if (diffInMinutes < 60) {
+      if (diffInMinutes === 1) return 'منذ دقيقة واحدة';
+      if (diffInMinutes === 2) return 'منذ دقيقتين';
+      if (diffInMinutes >= 3 && diffInMinutes <= 10) return `منذ ${diffInMinutes} دقائق`;
+      return `منذ ${diffInMinutes} دقيقة`;
+    } else if (diffInHours < 24) {
+      if (diffInHours === 1) return 'منذ ساعة واحدة';
+      if (diffInHours === 2) return 'منذ ساعتين';
+      if (diffInHours >= 3 && diffInHours <= 10) return `منذ ${diffInHours} ساعات`;
+      return `منذ ${diffInHours} ساعة`;
+    } else if (diffInDays < 7) {
+      if (diffInDays === 1) return 'منذ يوم واحد';
+      if (diffInDays === 2) return 'منذ يومين';
+      if (diffInDays >= 3 && diffInDays <= 10) return `منذ ${diffInDays} أيام`;
+      return `منذ ${diffInDays} يوم`;
+    } else if (diffInWeeks < 4) {
+      if (diffInWeeks === 1) return 'منذ أسبوع واحد';
+      if (diffInWeeks === 2) return 'منذ أسبوعين';
+      if (diffInWeeks >= 3 && diffInWeeks <= 10) return `منذ ${diffInWeeks} أسابيع`;
+      return `منذ ${diffInWeeks} أسبوع`;
+    } else if (diffInMonths < 12) {
+      if (diffInMonths === 1) return 'منذ شهر واحد';
+      if (diffInMonths === 2) return 'منذ شهرين';
+      if (diffInMonths >= 3 && diffInMonths <= 10) return `منذ ${diffInMonths} أشهر`;
+      return `منذ ${diffInMonths} شهر`;
+    } else {
+      if (diffInYears === 1) return 'منذ سنة واحدة';
+      if (diffInYears === 2) return 'منذ سنتين';
+      if (diffInYears >= 3 && diffInYears <= 10) return `منذ ${diffInYears} سنوات`;
+      return `منذ ${diffInYears} سنة`;
+    }
+  } catch (error) {
+    console.error("خطأ في حساب التاريخ:", error, "التاريخ:", utcDateString);
+    return "تاريخ غير متاح";
+  }
+};
+  // ... (بقية الكود يبقى كما هو) ...
+
+// ... بقية الكود ...
 
   useEffect(() => {
     if (token) fetchProducts();
   }, [token]);
+  
+  useEffect(() => {
+    if (token && allProducts.length) {
+      const userIds = Array.from(new Set(allProducts.map(p => p.userId)));
+      userIds.forEach((id) => fetchUserData(id));
+    }
+  }, [allProducts, token]);
 
-  // كل ما يتغير appliedFilters نرجع للصفحة الأولى
   useEffect(() => {
     setCurrentPage(1);
   }, [appliedFilters]);
@@ -85,17 +205,14 @@ setAllProducts(uniqueProducts);
   const filteredProducts = allProducts.filter((product) => {
     const matchesCategory =
       appliedFilters.categories.length === 0 ||
-      appliedFilters.categories.includes(product.categoryName);
-    const matchesCountry =
-      appliedFilters.countries.length === 0 ||
-      appliedFilters.countries.includes(product.countryName);
+      appliedFilters.categories.includes(product.categoryId);
+    
     const matchesPrice = product.price <= appliedFilters.price;
-    return matchesCategory && matchesCountry && matchesPrice;
+    
+    return matchesCategory && matchesPrice;
   });
 
-  const totalPages = Math.ceil(
-    filteredProducts.length / PRODUCTS_PER_PAGE
-  );
+  const totalPages = Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE);
   const displayedProducts = filteredProducts.slice(
     (currentPage - 1) * PRODUCTS_PER_PAGE,
     currentPage * PRODUCTS_PER_PAGE
@@ -104,7 +221,6 @@ setAllProducts(uniqueProducts);
   const handleApplyFilters = () => {
     setAppliedFilters({
       categories: selectedCategories,
-      countries: selectedCountries,
       price: priceRange,
     });
   };
@@ -112,58 +228,44 @@ setAllProducts(uniqueProducts);
   const handleImageChange = (e) => {
     setNewProduct((p) => ({ ...p, image: e.target.files[0] }));
   };
-
-  const categoryMap = {
-    "الدوس": 1,
-    "woodworking": 2,
-    "Embroidery": 3,
-    "Metalworking": 4,
-  };
-  
   
   const handleSubmitProduct = async (e) => {
     e.preventDefault();
     console.log("submitting...");
     
     const { name, description, price, category, image } = newProduct;
-  
-    // التأكد من ملء جميع الحقول
+
     if (!name || !description || !price || !category || !image) {
       return alert("يرجى ملء جميع الحقول واختيار صورة");
     }
-  
-    // تحويل الاسم المختار للفئة إلى ID
-    const categoryId = categoryMap[category];
+
+    const categoryId = parseInt(category);
     if (!categoryId) {
       return alert("فئة غير صالحة");
     }
-  
-    // إعداد البيانات للإرسال
+
     const formData = new FormData();
-    formData.append("Title", name);            // اسم المنتج
-    formData.append("Description", description); // وصف المنتج
-    formData.append("Price", price);            // سعر المنتج
-    formData.append("CategoryId", categoryId);  // CategoryId وليس categoryName
-    formData.append("Image", image);            // صورة المنتج
-    // لو كان مطلوب UserId ضيفه هنا (مثال: formData.append("UserId", userId);)
-  
+    formData.append("Title", name);
+    formData.append("Description", description);
+    formData.append("Price", price.toString());
+    formData.append("CategoryId", categoryId.toString());
+    formData.append("Images", image);
+
     try {
-      // إرسال البيانات عبر API
       const response = await axios.post(
         "https://ourheritage.runasp.net/api/HandiCrafts/create",
         formData,
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",  // تأكيد أن البيانات بصيغة FormData
+            "Content-Type": "multipart/form-data",
           },
         }
       );
-      // عند النجاح
+      
       console.log("تمت الإضافة بنجاح", response.data);
       alert("✅ تم إضافة المنتج بنجاح");
-  
-      // إغلاق المودال وتصفير الحقول
+
       setIsModalOpen(false);
       setNewProduct({
         name: "",
@@ -172,86 +274,75 @@ setAllProducts(uniqueProducts);
         category: "",
         image: null,
       });
-  // إعادة تحميل المنتجات
-fetchProducts();
-} catch (error) {
-  // طباعة كامل الخطأ
-  console.error("خطأ في الإضافة:", error.response || error.message);
-  
-  if (error.response) {
-    // إذا كانت استجابة من الخادم، نعرض رسالة الخطأ
-    console.error("API Error:", error.response.data);
-    alert(`❌ فشل في إرسال المنتج: ${error.response.data?.message || error.response.statusText}`);
-  } else {
-    // إذا كان هناك خطأ غير متعلق بالـ API (مثل مشاكل في الاتصال)
-    alert("❌ فشل في إرسال المنتج: تحقق من الاتصال بالإنترنت أو حاول مرة أخرى");
-  }
-}}
+      
+      fetchProducts();
+    } catch (error) {
+      console.error("خطأ في الإضافة:", error.response || error);
+      
+      let errorMessage = "❌ فشل في إرسال المنتج";
+      if (error.response) {
+        errorMessage += `: ${error.response.data?.message || error.response.statusText}`;
+        console.error("تفاصيل الخطأ:", error.response.data);
+      } else if (error.request) {
+        errorMessage += ": لا يوجد اتصال بالخادم";
+      } else {
+        errorMessage += ": خطأ في إعداد الطلب";
+      }
+      
+      alert(errorMessage);
+    }
+  };
 
   return (
     <div className={styles.shopContainer}>
       <div className={styles.filtersSidebar}>
         <h3 className={styles.filterTitle}>تصفية حسب</h3>
+        
         <div className={styles.filterSection}>
           <h4>التصنيف</h4>
           {categories.map((cat) => (
-            <label key={cat} className={styles.filterItem}>
+            <label key={cat.id} className={styles.filterItem}>
               <input
                 type="checkbox"
-                checked={selectedCategories.includes(cat)}
+                checked={selectedCategories.includes(cat.id)}
                 onChange={() =>
                   setSelectedCategories((prev) =>
-                    prev.includes(cat)
-                      ? prev.filter((c) => c !== cat)
-                      : [...prev, cat]
+                    prev.includes(cat.id)
+                      ? prev.filter((c) => c !== cat.id)
+                      : [...prev, cat.id]
                   )
                 }
               />
-              {cat}
+              {/* استخدام الأسماء العربية من كائن التعيين */}
+              {categoryNames[cat.id] || cat.name}
             </label>
           ))}
         </div>
+        
         <div className={styles.filterSection}>
           <h4>السعر</h4>
           <div className={styles.priceFilter}>
             <input
               type="range"
               min="0"
-              max="405"
+              max="500"
               value={priceRange}
               onChange={(e) => setPriceRange(+e.target.value)}
             />
             <span>{priceRange} $</span>
           </div>
         </div>
-        <div className={styles.filterSection}>
-          <h4>الدولة</h4>
-          {countries.map((ct) => (
-            <label key={ct} className={styles.filterItem}>
-              <input
-                type="checkbox"
-                checked={selectedCountries.includes(ct)}
-                onChange={() =>
-                  setSelectedCountries((prev) =>
-                    prev.includes(ct)
-                      ? prev.filter((c) => c !== ct)
-                      : [...prev, ct]
-                  )
-                }
-              />
-              {ct}
-            </label>
-          ))}
-        </div>
+        
         <button
           className={styles.applyButton}
           onClick={handleApplyFilters}
         >
           تطبيق
         </button>
+        
         <button
           className={styles.applyButton}
-          style={{ marginTop: "10px", backgroundColor: `#A67C52` ,hover:`#099d79`}}
+          style={{ marginTop: "10px", backgroundColor: `#A67C52` }}
           onClick={() => setIsModalOpen(true)}
         >
           ➕ إضافة منتج
@@ -298,8 +389,9 @@ fetchProducts();
               >
                 <option value="">اختر الفئة</option>
                 {categories.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
+                  <option key={cat.id} value={cat.id}>
+                    {/* استخدام الأسماء العربية من كائن التعيين */}
+                    {categoryNames[cat.id] || cat.name}
                   </option>
                 ))}
               </select>
@@ -329,85 +421,86 @@ fetchProducts();
                 <div key={p.id} className={styles.productPost}>
                   <div className={styles.postHeader}>
                     <div>
-                      <p className={styles.username}>ANN JI</p>
-                      <p className={styles.postDate}>منذ 3 أيام</p>
+                      <p className={styles.username}>
+                        {userMap[p.userId]
+                          ? `${userMap[p.userId].firstName} ${userMap[p.userId].lastName}`
+                          : "مستخدم غير معروف"}
+                      </p>
+                      <p className={styles.postDate}>
+                        {p.dateAdded ? timeAgoCustom(p.dateAdded) : "تاريخ غير متاح"}
+                      </p>
                     </div>
                     <div className={styles.profileWrapper}>
-  <Link to={`/profile/${p.userId}`}>
-    <img
-      src={prof1}
-      alt="User"
-      className={styles.profileImage}
-    />
-  </Link>
-</div>
-
+                      <Link to={`/profile/${p.userId}`}>
+                        <img
+                          src={userMap[p.userId]?.profilePicture || prof1}
+                          alt="User"
+                          className={styles.profileImage}
+                        />
+                      </Link>
+                    </div>
                   </div>
-<Link to={`/product-details/${p.id}`}>
-  <img
-    src={p.imageOrVideo?.[0] || defaultProductImage}
-    alt={p.title}
-    className={styles.productImage}
-    onError={(e) => {
-      e.target.onerror = null;
-      e.target.src = defaultProductImage;
-    }}
-  />
-</Link>
+
+                  <Link to={`/product-details/${p.id}`}>
+                    <img
+                      src={p.imageOrVideo?.[0] || defaultProductImage}
+                      alt={p.title}
+                      className={styles.productImage}
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = defaultProductImage;
+                      }}
+                    />
+                  </Link>
 
                   <div className={styles.productInfo}>
                     <h3>{p.title}</h3>
                     <p>{p.description}</p>
                     <div className={styles.productFooter}>
-<button
-  onClick={() => {
-    const cartItem = {
-      id: p.id,
-      name: p.title,
-      price: Number(p.price),
-      image: p.imageOrVideo?.[0] || p.image || defaultProductImage,
-      quantity: 1,
-    };
-    addToCart(cartItem);
-    alert("تمت إضافة المنتج إلى السلة");
-  }}
-  className={styles.cartButton}
->
-  <i className="fa-solid fa-cart-shopping text-lg" />
-  <span className="font-semibold">{p.price}$</span>
-</button>
-
-
-                      <span className={styles.likes}>❤ {p.likes || 0}</span>
+                      <button
+                        onClick={() => {
+                          const cartItem = {
+                            id: p.id,
+                            name: p.title,
+                            price: Number(p.price),
+                            image: p.imageOrVideo?.[0] || p.image || defaultProductImage,
+                            quantity: 1,
+                          };
+                          addToCart(cartItem);
+                          alert("تمت إضافة المنتج إلى السلة");
+                        }}
+                        className={styles.cartButton}
+                      >
+                        <i className="fa-solid fa-cart-shopping text-lg" />
+                        <span className="font-semibold">{p.price}$</span>
+                      </button>
+                      <span className={styles.likes}>❤ {p.likes || 0}</span>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
+            
             <div className={styles.pagination}>
               <button
-                onClick={() =>
-                  setCurrentPage((p) => Math.max(p - 1, 1))
-                }
+                onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
                 disabled={currentPage === 1}
               >
                 السابق
               </button>
+              
               {Array.from({ length: totalPages }, (_, i) => (
                 <button
                   key={i + 1}
-                  className={
-                    currentPage === i + 1 ? styles.activePage : ""
-                  }
+                  className={currentPage === i + 1 ? styles.activePage : ""}
                   onClick={() => setCurrentPage(i + 1)}
                 >
                   {i + 1}
                 </button>
               ))}
+              
               <button
-                onClick={() =>
-                  setCurrentPage((p) => Math.min(p + 1, totalPages))
-                }
+                onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
                 disabled={currentPage === totalPages}
               >
                 التالي

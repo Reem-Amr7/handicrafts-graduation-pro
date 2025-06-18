@@ -2,7 +2,6 @@ import React, { useState, useContext } from 'react';
 import background from "./../../assets/background.jpg";
 import styles from "./RePassword.module.css";
 import { useFormik } from 'formik';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { TokenContext } from "../../Context/TokenContext";
 
@@ -30,32 +29,50 @@ export default function RePassword() {
     validate,
     onSubmit: async (values) => {
       setIsLoading(true);
+      setErrorMessage(null);
+      setUserMessage(null);
+      
       try {
-        const response = await axios.post(
+        // إصلاح: تغيير هيكل البيانات المرسلة
+        const requestData = new URLSearchParams();
+        requestData.append('Email', values.email);
+        
+        const response = await fetch(
           "https://ourheritage.runasp.net/api/Auth/forgot-password",
-          { Email: values.email },
           {
+            method: 'POST',
             headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'multipart/form-data',
-            }
+              'Content-Type': 'application/x-www-form-urlencoded',
+              ...(token && { 'Authorization': `Bearer ${token}` })
+            },
+            body: requestData.toString()
           }
         );
 
-        console.log("Response data:", response.data);
-
-        if (response.data) {
-          alert(response.data); // أو استخدمي toast لو تحبي
-          localStorage.setItem("resetEmail", values.email); // حفظ الإيميل مؤقتًا
-          navigate('/otp'); // التوجيه لصفحة OTP
+        // التحقق من حالة الاستجابة
+        if (response.ok) {
+          const data = await response.text();
+          setUserMessage(data || "تم إرسال رمز التحقق إلى بريدك الإلكتروني");
+          localStorage.setItem("recoveryEmail", values.email);
+          setTimeout(() => {
+            navigate('/otp');
+          }, 1500);
         } else {
-          alert("تمت العملية بنجاح، ولكن لم نتمكن من العثور على الرسالة.");
+          const errorData = await response.json();
+          throw new Error(errorData.message || `خطأ في الخادم: ${response.status}`);
         }
       } catch (error) {
         console.error("Error details:", error);
-        setErrorMessage(error.response?.data?.message || "حدث خطأ ما");
+        
+        // معالجة خطأ 400 بشكل خاص
+        if (error.message.includes('400')) {
+          setErrorMessage("طلب غير صالح: يرجى التحقق من صحة البريد الإلكتروني");
+        } else {
+          setErrorMessage(error.message || "حدث خطأ ما");
+        }
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     }
   });
 
