@@ -18,7 +18,7 @@ export default function Home() {
 
         <Maincontent className="flex-1 w-full overflow-x-hidden" />  {/* ← خليها w-full و flex-1 */}
 
-        <div className="hidden lg:block">
+        <div className="hidden lg:block  ">
           <RightSidebar />
         </div>
       </div>

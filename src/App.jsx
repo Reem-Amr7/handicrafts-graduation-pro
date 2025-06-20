@@ -26,6 +26,9 @@ import AdminDashboard from './components/Admin Dashboard/admin'
 import PopularArticles from './components/Admin Dashboard/popularArticles'
 import AllHandicrafts from './components/Admin Dashboard/totalHandicrafts'
 import TopUsers from './components/Admin Dashboard/topUsers'
+import UsersManagement from './components/Admin Dashboard/allUsers'
+import PopularCategories from './components/Admin Dashboard/totalCategory'
+import UserActivityDetails from './components/Admin Dashboard/userActivity'
 function App() {
   const routes = createBrowserRouter([
     {
@@ -54,6 +57,12 @@ function App() {
         { path: "Populararticles", element: <PopularArticles /> },
          {path: "/handicrafts", element: <AllHandicrafts />,},
         {path:"/top-users" ,element:<TopUsers />},
+        { path:"/users", element:<UsersManagement />} ,
+        { path:"/allcat", element:<PopularCategories />} ,
+        { path: "/users/:userId", element: <UserActivityDetails /> },
+
+
+
 
         { path: "*", element: <Navigate to="/login" replace /> },
       ],

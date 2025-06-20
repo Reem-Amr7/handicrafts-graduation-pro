@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line
 } from "recharts";
+import { Link } from 'react-router-dom';
+import { useContext } from "react";
+import { TokenContext } from "../../Context/TokenContext";
 
 const currentYear = new Date().getFullYear();
 const monthNames = [
@@ -30,9 +33,24 @@ export default function AdminDashboard() {
   const [lastMonthData, setLastMonthData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedYear, setSelectedYear] = useState(currentYear);
+  const { token } = useContext(TokenContext);
+
+  // New state for additional stats from API
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    totalCulturalArticles: 0,
+    totalLikes: 0,
+    totalComments: 0,
+    totalFollows: 0,
+    totalCategories: 0,
+    activeUsersToday: 0,
+  });
+  const [topActiveUsers, setTopActiveUsers] = useState([]);
+  const [popularArticles, setPopularArticles] = useState([]);
+  const [popularHandiCrafts, setPopularHandiCrafts] = useState([]);
 
   // Authentication token - replace with your actual token
-  const authToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoiYWhtZWRAZ21haWwuY29tIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvZW1haWxhZGRyZXNzIjoiYWhtZWRAZ21haWwuY29tIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvbmFtZWlkZW50aWZpZXIiOiI3IiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjpbIkFkbWluIiwiVXNlciJdLCJleHAiOjE3NTAyODUxNjMsImlzcyI6Imh0dHBzOi8vbG9jYWxob3N0IiwiYXVkIjoiaHR0cHM6Ly9sb2NhbGhvc3Q6NzA0NS8ifQ.pUxPJ0IuUmG1egnkihUasqGoE-vzW2Y6WQ1I_l1ZU4Q";
+const authToken = token;
 
   // Calculate percentage change
   const calculatePercentageChange = (current, previous) => {
@@ -44,6 +62,78 @@ export default function AdminDashboard() {
     const fetchData = async () => {
       setLoading(true);
       try {
+        // Fetch admin statistics
+        const adminStatsRes = await fetch(
+          "https://ourheritage.runasp.net/api/Statistics/admin",
+          {
+            headers: {
+              Authorization: `Bearer ${authToken}`,
+              Accept: '*/*',
+            },
+          }
+        );
+        const adminStatsResult = await adminStatsRes.json();
+
+        if (!adminStatsResult.isSucceeded) {
+          throw new Error(adminStatsResult.message || 'Failed to fetch admin statistics');
+        }
+
+        const { model } = adminStatsResult;
+
+        // Update stats
+        setStats({
+          totalUsers: model.totalUsers,
+          totalCulturalArticles: model.totalCulturalArticles,
+          totalHandiCrafts: model.totalHandiCrafts,
+          totalLikes: model.totalLikes,
+          totalComments: model.totalComments,
+          totalFollows: model.totalFollows,
+          totalCategories: model.totalCategories,
+          activeUsersToday: model.activeUsersToday,
+        });
+
+        // Update total handicrafts
+        setTotalHandicrafts(model.totalHandiCrafts);
+
+        // Update top active users, popular articles, and handicrafts
+        setTopActiveUsers(model.topActiveUsers);
+        setPopularArticles(model.popularArticles);
+        setPopularHandiCrafts(model.popularHandiCrafts);
+
+        // Process monthly activity for the selected year
+        const filteredMonthlyData = model.monthlyActivity
+          .filter(activity => activity.year === selectedYear)
+          .map((activity, index) => {
+            const monthName = monthNames[index].substring(0, 3);
+            return {
+              month: monthName,
+              monthNumber: index + 1,
+              newUsers: activity.newUsers,
+              newArticles: activity.newArticles,
+              newHandiCrafts: activity.newHandiCrafts,
+              totalEngagement: activity.totalLikes + activity.totalComments,
+              totalActivity: activity.newUsers + activity.newArticles + activity.newHandiCrafts,
+            };
+          });
+
+        // Ensure all 12 months are represented
+        const chartData = Array.from({ length: 12 }, (_, index) => {
+          const month = index + 1;
+          const monthName = monthNames[index].substring(0, 3);
+          const existingData = filteredMonthlyData.find(data => data.monthNumber === month);
+          return existingData || {
+            month: monthName,
+            monthNumber: month,
+            newUsers: 0,
+            newArticles: 0,
+            newHandiCrafts: 0,
+            totalEngagement: 0,
+            totalActivity: 0,
+          };
+        });
+
+        setMonthlyData(chartData);
+
         // Fetch current month data
         const currentMonthRes = await fetch(
           "https://ourheritage.runasp.net/api/Statistics/current-month",
@@ -71,68 +161,11 @@ export default function AdminDashboard() {
         if (lastMonthResult.isSucceeded) {
           setLastMonthData(lastMonthResult.model);
         }
-
-        // Fetch total handicrafts
-        const handicraftsRes = await fetch(
-          "https://ourheritage.runasp.net/api/Statistics/popular-handicrafts?pageIndex=1&pageSize=10",
-          {
-            headers: {
-              Authorization: `Bearer ${authToken}`,
-            },
-          }
-        );
-        const handicraftsData = await handicraftsRes.json();
-        if (handicraftsData.isSucceeded) {
-          setTotalHandicrafts(handicraftsData.model.totalItems);
-        }
-
-        // Fetch monthly reports for all 12 months
-        const monthlyPromises = [];
-        for (let month = 1; month <= 12; month++) {
-          monthlyPromises.push(
-            fetch(
-              `https://ourheritage.runasp.net/api/Statistics/monthly-report?year=${selectedYear}&month=${month}`,
-              {
-                headers: {
-                  Authorization: `Bearer ${authToken}`,
-                },
-              }
-            ).then(res => res.json())
-          );
-        }
-
-        const monthlyResults = await Promise.all(monthlyPromises);
-        const chartData = monthlyResults.map((result, index) => {
-          const month = index + 1;
-          const monthName = monthNames[index].substring(0, 3); // Short month name
-          
-          if (result.isSucceeded) {
-            return {
-              month: monthName,
-              monthNumber: month,
-              newUsers: result.model.newUsers,
-              newArticles: result.model.newArticles,
-              newHandiCrafts: result.model.newHandiCrafts,
-              totalEngagement: result.model.totalEngagement,
-              // Combined metric for overall activity
-              totalActivity: result.model.newUsers + result.model.newArticles + result.model.newHandiCrafts
-            };
-          } else {
-            return {
-              month: monthName,
-              monthNumber: month,
-              newUsers: 0,
-              newArticles: 0,
-              newHandiCrafts: 0,
-              totalEngagement: 0,
-              totalActivity: 0
-            };
-          }
-        });
-
-        setMonthlyData(chartData);
       } catch (err) {
         console.error("Failed to fetch data:", err);
+        if (err.message.includes('Failed to fetch')) {
+          console.error('Possible CORS or network issue. Check server configuration or token validity.');
+        }
       } finally {
         setLoading(false);
       }
@@ -157,9 +190,30 @@ export default function AdminDashboard() {
         <nav className="space-y-4">
           <a href="#" className="flex items-center gap-2 hover:text-blue-400 text-blue-400">📊 Dashboard</a>
           <a href="#" className="flex items-center gap-2 hover:text-blue-400">📋 Orders</a>
-          <a href="#" className="flex items-center gap-2 hover:text-blue-400">👥 Users</a>
-          <a href="#" className="flex items-center gap-2 hover:text-blue-400">👑 Top Users</a>
-          <a href="#" className="flex items-center gap-2 hover:text-blue-400">📰 Popular Articles</a>
+          <Link 
+            to="/allcat" 
+            className="flex items-center gap-2 hover:text-blue-400"
+          >
+            📋 Total Categories
+          </Link>
+          <Link 
+            to="/users" 
+            className="flex items-center gap-2 hover:text-blue-400"
+          >
+            👥 Users
+          </Link>     
+          <Link 
+            to="/top-users" 
+            className="flex items-center gap-2 hover:text-blue-400"
+          >
+            👑 Top Users
+          </Link>
+          <Link 
+            to="/Populararticles" 
+            className="flex items-center gap-2 hover:text-blue-400"
+          >
+            📰 Popular Articles
+          </Link>
           <a href="#" className="flex items-center gap-2 hover:text-blue-400">⚙️ Settings</a>
           <a href="#" className="flex items-center gap-2 text-red-400 hover:text-red-500">🚪 Logout</a>
         </nav>
@@ -300,27 +354,27 @@ export default function AdminDashboard() {
           <div className="bg-white rounded-xl shadow p-4 flex items-center gap-4">
             <div className="text-blue-600 text-3xl">👥</div>
             <div>
-              <h4 className="text-gray-500">New Users ({selectedYear})</h4>
-              <p className="text-xl font-bold">{yearlyTotals.totalNewUsers}</p>
-              <span className="text-sm text-blue-600">Total for year</span>
+              <h4 className="text-gray-500">Total Users</h4>
+              <p className="text-xl font-bold">{stats.totalUsers}</p>
+              <span className="text-sm text-blue-600">All time</span>
             </div>
           </div>
 
           <div className="bg-white rounded-xl shadow p-4 flex items-center gap-4">
             <div className="text-green-600 text-3xl">📰</div>
             <div>
-              <h4 className="text-gray-500">New Articles ({selectedYear})</h4>
-              <p className="text-xl font-bold">{yearlyTotals.totalNewArticles}</p>
-              <span className="text-sm text-green-600">Total for year</span>
+              <h4 className="text-gray-500">Total Articles</h4>
+              <p className="text-xl font-bold">{stats.totalCulturalArticles}</p>
+              <span className="text-sm text-green-600">All time</span>
             </div>
           </div>
 
           <div className="bg-white rounded-xl shadow p-4 flex items-center gap-4">
             <div className="text-purple-600 text-3xl">📦</div>
             <div>
-              <h4 className="text-gray-500">New Handicrafts ({selectedYear})</h4>
-              <p className="text-xl font-bold">{yearlyTotals.totalNewHandiCrafts}</p>
-              <span className="text-sm text-purple-600">Total for year</span>
+              <h4 className="text-gray-500">Total Handicrafts</h4>
+              <p className="text-xl font-bold">{stats.totalHandiCrafts}</p>
+              <span className="text-sm text-purple-600">All time</span>
             </div>
           </div>
 
@@ -330,6 +384,52 @@ export default function AdminDashboard() {
               <h4 className="text-gray-500">Total Engagement ({selectedYear})</h4>
               <p className="text-xl font-bold">{yearlyTotals.totalEngagement}</p>
               <span className="text-sm text-orange-600">Total for year</span>
+            </div>
+          </div>
+
+          {/* New Stats Cards */}
+          <div className="bg-white rounded-xl shadow p-4 flex items-center gap-4">
+            <div className="text-red-600 text-3xl">❤️</div>
+            <div>
+              <h4 className="text-gray-500">Total Likes</h4>
+              <p className="text-xl font-bold">{stats.totalLikes}</p>
+              <span className="text-sm text-red-600">All time</span>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow p-4 flex items-center gap-4">
+            <div className="text-teal-600 text-3xl">💬</div>
+            <div>
+              <h4 className="text-gray-500">Total Comments</h4>
+              <p className="text-xl font-bold">{stats.totalComments}</p>
+              <span className="text-sm text-teal-600">All time</span>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow p-4 flex items-center gap-4">
+            <div className="text-indigo-600 text-3xl">👤➕</div>
+            <div>
+              <h4 className="text-gray-500">Total Follows</h4>
+              <p className="text-xl font-bold">{stats.totalFollows}</p>
+              <span className="text-sm text-indigo-600">All time</span>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow p-4 flex items-center gap-4">
+            <div className="text-pink-600 text-3xl">📂</div>
+            <div>
+              <h4 className="text-gray-500">Total Categories</h4>
+              <p className="text-xl font-bold">{stats.totalCategories}</p>
+              <span className="text-sm text-pink-600">All time</span>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow p-4 flex items-center gap-4">
+            <div className="text-yellow-600 text-3xl">👀</div>
+            <div>
+              <h4 className="text-gray-500">Active Users Today</h4>
+              <p className="text-xl font-bold">{stats.activeUsersToday}</p>
+              <span className="text-sm text-yellow-600">Today</span>
             </div>
           </div>
         </div>
@@ -467,6 +567,47 @@ export default function AdminDashboard() {
                     <span className="text-purple-500">👤</span> {cust.name}
                   </span>
                   <span className="text-gray-500">{cust.amount}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Top Active Users */}
+          <div className="bg-white p-4 rounded-xl shadow">
+            <h3 className="text-lg font-semibold mb-4">Top Active Users</h3>
+            <ul className="space-y-2">
+              {topActiveUsers.map((user, index) => (
+                <li key={user.userId} className="flex justify-between text-sm">
+                  <span className="flex items-center gap-2">
+                    <span className="text-yellow-500">👑</span> {user.userName}
+                  </span>
+                  <span className="text-gray-500">Score: {user.activityScore}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Popular Articles */}
+          <div className="bg-white p-4 rounded-xl shadow">
+            <h3 className="text-lg font-semibold mb-4">Popular Articles</h3>
+            <ul className="space-y-2">
+              {popularArticles.map((article, index) => (
+                <li key={article.id} className="flex justify-between text-sm">
+                  <span>{article.title}</span>
+                  <span className="text-gray-500">Likes: {article.likeCount}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Popular Handicrafts */}
+          <div className="bg-white p-4 rounded-xl shadow">
+            <h3 className="text-lg font-semibold mb-4">Popular Handicrafts</h3>
+            <ul className="space-y-2">
+              {popularHandiCrafts.map((craft, index) => (
+                <li key={craft.id} className="flex justify-between text-sm">
+                  <span>{craft.title}</span>
+                  <span className="text-gray-500">Favorites: {craft.favoriteCount}</span>
                 </li>
               ))}
             </ul>
