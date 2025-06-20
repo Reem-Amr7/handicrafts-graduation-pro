@@ -13,6 +13,7 @@ import utc from "dayjs/plugin/utc";
 import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/ar";
 import timezone from 'dayjs/plugin/timezone';
+import { FaHeart } from "react-icons/fa"; // تم استبدال FaThumbsUp بـ FaHeart
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -20,6 +21,22 @@ dayjs.extend(relativeTime);
 dayjs.locale("ar");
 
 const PRODUCTS_PER_PAGE = 9;
+
+// تعريف الفئات بالأسماء الإنجليزية كما في قاعدة البيانات
+const categories = [
+  { id: 1, name: "الدوس" },
+  { id: 2, name: "Woodworking" },
+  { id: 3, name: "Embroidery" },
+  { id: 4, name: "Metalworking" }
+];
+
+// كائن للتعيين بين الـ IDs والأسماء العربية
+const categoryNames = {
+  1: "الدوس",
+  2: "المعمار",
+  3: "منتجات الخاصة",
+  4: "السجاد الديوني"
+};
 
 const Shop = () => {
   const { token } = useContext(TokenContext);
@@ -34,7 +51,6 @@ const Shop = () => {
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [userMap, setUserMap] = useState({});
-  const [categories, setCategories] = useState([]);
 
   const [newProduct, setNewProduct] = useState({
     name: "",
@@ -78,10 +94,25 @@ const Shop = () => {
             const key = `${item.title}-${item.description}`;
             if (!uniqueMap.has(key)) {
               uniqueMap.set(key, item);
+              uniqueMap.set(key, { 
+                ...item,
+                likes: item.likes || 0 
+              });
             }
           });
-          const uniqueProducts = Array.from(uniqueMap.values()).sort((a, b) => b.id - a.id);
+          const uniqueProducts = Array.from(uniqueMap.values()).map(p => ({
+            ...p,
+            likes: p.likes || 0
+          })).sort((a, b) => b.id - a.id);
           setAllProducts(uniqueProducts);
+          
+          // تهيئة المفضلة المحلية بعد جلب المنتجات
+          const initialFavorites = {};
+          uniqueProducts.forEach(p => {
+            const isFav = localStorage.getItem(`favorite-${p.id}`) === 'true';
+            initialFavorites[p.id] = isFav;
+          });
+          setLocalFavorites(initialFavorites);
         } else {
           setAllProducts([]);
         }
@@ -118,60 +149,67 @@ const Shop = () => {
         dateStr += "T" + new Date().toISOString().substring(11, 19) + "Z";
       }
 
-      const date = dayjs.utc(dateStr);
-      if (!date.isValid()) return "تاريخ غير صالح";
-      
-      const now = dayjs.utc();
-      const diffInMilliseconds = now.diff(date);
-      
-      const diffInSeconds = Math.floor(diffInMilliseconds / 1000);
-      const diffInMinutes = Math.floor(diffInSeconds / 60);
-      const diffInHours = Math.floor(diffInMinutes / 60);
-      const diffInDays = Math.floor(diffInHours / 24);
-      const diffInWeeks = Math.floor(diffInDays / 7);
-      const diffInMonths = Math.floor(diffInDays / 30);
-      const diffInYears = Math.floor(diffInMonths / 12);
+    // استخدام التوقيت العالمي الموحد (UTC) للتاريخ الوارد
+    const date = dayjs.utc(dateStr);
+    if (!date.isValid()) return "تاريخ غير صالح";
     
-      if (diffInSeconds < 5) {
-        return 'الآن';
-      } else if (diffInSeconds < 60) {
-        return `منذ ${diffInSeconds} ثانية`;
-      } else if (diffInMinutes < 60) {
-        if (diffInMinutes === 1) return 'منذ دقيقة واحدة';
-        if (diffInMinutes === 2) return 'منذ دقيقتين';
-        if (diffInMinutes >= 3 && diffInMinutes <= 10) return `منذ ${diffInMinutes} دقائق`;
-        return `منذ ${diffInMinutes} دقيقة`;
-      } else if (diffInHours < 24) {
-        if (diffInHours === 1) return 'منذ ساعة واحدة';
-        if (diffInHours === 2) return 'منذ ساعتين';
-        if (diffInHours >= 3 && diffInHours <= 10) return `منذ ${diffInHours} ساعات`;
-        return `منذ ${diffInHours} ساعة`;
-      } else if (diffInDays < 7) {
-        if (diffInDays === 1) return 'منذ يوم واحد';
-        if (diffInDays === 2) return 'منذ يومين';
-        if (diffInDays >= 3 && diffInDays <= 10) return `منذ ${diffInDays} أيام`;
-        return `منذ ${diffInDays} يوم`;
-      } else if (diffInWeeks < 4) {
-        if (diffInWeeks === 1) return 'منذ أسبوع واحد';
-        if (diffInWeeks === 2) return 'منذ أسبوعين';
-        if (diffInWeeks >= 3 && diffInWeeks <= 10) return `منذ ${diffInWeeks} أسابيع`;
-        return `منذ ${diffInWeeks} أسبوع`;
-      } else if (diffInMonths < 12) {
-        if (diffInMonths === 1) return 'منذ شهر واحد';
-        if (diffInMonths === 2) return 'منذ شهرين';
-        if (diffInMonths >= 3 && diffInMonths <= 10) return `منذ ${diffInMonths} أشهر`;
-        return `منذ ${diffInMonths} شهر`;
-      } else {
-        if (diffInYears === 1) return 'منذ سنة واحدة';
-        if (diffInYears === 2) return 'منذ سنتين';
-        if (diffInYears >= 3 && diffInYears <= 10) return `منذ ${diffInYears} سنوات`;
-        return `منذ ${diffInYears} سنة`;
-      }
-    } catch (error) {
-      console.error("خطأ في حساب التاريخ:", error, "التاريخ:", utcDateString);
-      return "تاريخ غير متاح";
+    // الحصول على الوقت الحالي بالتوقيت العالمي الموحد (UTC)
+    const now = dayjs.utc();
+    const diffInMilliseconds = now.diff(date);
+    
+    // تحويل الفروق إلى وحدات زمنية
+    const diffInSeconds = Math.floor(diffInMilliseconds / 1000);
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    const diffInDays = Math.floor(diffInHours / 24);
+    const diffInWeeks = Math.floor(diffInDays / 7);
+    const diffInMonths = Math.floor(diffInDays / 30);
+    const diffInYears = Math.floor(diffInMonths / 12);
+  
+    // حساب دقيق مع مراعاة اللغة العربية
+    if (diffInSeconds < 5) {
+      return 'الآن';
+    } else if (diffInSeconds < 60) {
+      return `منذ ${diffInSeconds} ثانية`;
+    } else if (diffInMinutes < 60) {
+      if (diffInMinutes === 1) return 'منذ دقيقة واحدة';
+      if (diffInMinutes === 2) return 'منذ دقيقتين';
+      if (diffInMinutes >= 3 && diffInMinutes <= 10) return `منذ ${diffInMinutes} دقائق`;
+      return `منذ ${diffInMinutes} دقيقة`;
+    } else if (diffInHours < 24) {
+      if (diffInHours === 1) return 'منذ ساعة واحدة';
+      if (diffInHours === 2) return 'منذ ساعتين';
+      if (diffInHours >= 3 && diffInHours <= 10) return `منذ ${diffInHours} ساعات`;
+      return `منذ ${diffInHours} ساعة`;
+    } else if (diffInDays < 7) {
+      if (diffInDays === 1) return 'منذ يوم واحد';
+      if (diffInDays === 2) return 'منذ يومين';
+      if (diffInDays >= 3 && diffInDays <= 10) return `منذ ${diffInDays} أيام`;
+      return `منذ ${diffInDays} يوم`;
+    } else if (diffInWeeks < 4) {
+      if (diffInWeeks === 1) return 'منذ أسبوع واحد';
+      if (diffInWeeks === 2) return 'منذ أسبوعين';
+      if (diffInWeeks >= 3 && diffInWeeks <= 10) return `منذ ${diffInWeeks} أسابيع`;
+      return `منذ ${diffInWeeks} أسبوع`;
+    } else if (diffInMonths < 12) {
+      if (diffInMonths === 1) return 'منذ شهر واحد';
+      if (diffInMonths === 2) return 'منذ شهرين';
+      if (diffInMonths >= 3 && diffInMonths <= 10) return `منذ ${diffInMonths} أشهر`;
+      return `منذ ${diffInMonths} شهر`;
+    } else {
+      if (diffInYears === 1) return 'منذ سنة واحدة';
+      if (diffInYears === 2) return 'منذ سنتين';
+      if (diffInYears >= 3 && diffInYears <= 10) return `منذ ${diffInYears} سنوات`;
+      return `منذ ${diffInYears} سنة`;
     }
-  };
+  } catch (error) {
+    console.error("خطأ في حساب التاريخ:", error, "التاريخ:", utcDateString);
+    return "تاريخ غير متاح";
+  }
+};
+  // ... (بقية الكود يبقى كما هو) ...
+
+// ... بقية الكود ...
 
   useEffect(() => {
     if (token) {
@@ -220,7 +258,6 @@ const Shop = () => {
   
   const handleSubmitProduct = async (e) => {
     e.preventDefault();
-    console.log("submitting...");
     
     const { name, description, price, category, image } = newProduct;
 
@@ -252,9 +289,7 @@ const Shop = () => {
         }
       );
       
-      console.log("تمت الإضافة بنجاح", response.data);
       alert("✅ تم إضافة المنتج بنجاح");
-
       setIsModalOpen(false);
       setNewProduct({
         name: "",
@@ -263,21 +298,16 @@ const Shop = () => {
         category: "",
         image: null,
       });
-      
       fetchProducts();
     } catch (error) {
-      console.error("خطأ في الإضافة:", error.response || error);
-      
       let errorMessage = "❌ فشل في إرسال المنتج";
       if (error.response) {
         errorMessage += `: ${error.response.data?.message || error.response.statusText}`;
-        console.error("تفاصيل الخطأ:", error.response.data);
       } else if (error.request) {
         errorMessage += ": لا يوجد اتصال بالخادم";
       } else {
         errorMessage += ": خطأ في إعداد الطلب";
       }
-      
       alert(errorMessage);
     }
   };
@@ -302,7 +332,8 @@ const Shop = () => {
                   )
                 }
               />
-              {cat.name}
+              {/* استخدام الأسماء العربية من كائن التعيين */}
+              {categoryNames[cat.id] || cat.name}
             </label>
           ))}
         </div>
@@ -378,7 +409,8 @@ const Shop = () => {
                 <option value="">اختر الفئة</option>
                 {categories.map((cat) => (
                   <option key={cat.id} value={cat.id}>
-                    {cat.name}
+                    {/* استخدام الأسماء العربية من كائن التعيين */}
+                    {categoryNames[cat.id] || cat.name}
                   </option>
                 ))}
               </select>
@@ -414,68 +446,91 @@ const Shop = () => {
         ) : (
           <>
             <div className={styles.productsGrid}>
-              {displayedProducts.map((p) => (
-                <div key={p.id} className={styles.productPost}>
-                  <div className={styles.postHeader}>
-                    <div>
-                      <p className={styles.username}>
-                        {userMap[p.userId]
-                          ? `${userMap[p.userId].firstName} ${userMap[p.userId].lastName}`
-                          : "مستخدم غير معروف"}
-                      </p>
-                      <p className={styles.postDate}>
-                        {p.dateAdded ? timeAgoCustom(p.dateAdded) : "تاريخ غير متاح"}
-                      </p>
+              {displayedProducts.map((p) => {
+                // استخدام الحالة المحلية لتحديد ما إذا كان المنتج مفضلاً
+                const isFavorite = localFavorites[p.id] || false;
+                
+                return (
+                  <div key={p.id} className={styles.productPost}>
+                    <div className={styles.postHeader}>
+                      <div>
+                        <p className={styles.username}>
+                          {userMap[p.userId]
+                            ? `${userMap[p.userId].firstName} ${userMap[p.userId].lastName}`
+                            : "مستخدم غير معروف"}
+                        </p>
+                        <p className={styles.postDate}>
+                          {p.dateAdded ? timeAgoCustom(p.dateAdded) : "تاريخ غير متاح"}
+                        </p>
+                      </div>
+                      <div className={styles.profileWrapper}>
+                        <Link to={`/profile/${p.userId}`}>
+                          <img
+                            src={userMap[p.userId]?.profilePicture || prof1}
+                            alt="User"
+                            className={styles.profileImage}
+                          />
+                        </Link>
+                      </div>
                     </div>
-                    <div className={styles.profileWrapper}>
-                      <Link to={`/profile/${p.userId}`}>
-                        <img
-                          src={userMap[p.userId]?.profilePicture || prof1}
-                          alt="User"
-                          className={styles.profileImage}
-                        />
-                      </Link>
-                    </div>
-                  </div>
 
-                  <Link to={`/product-details/${p.id}`}>
-                    <img
-                      src={p.imageOrVideo?.[0] || defaultProductImage}
-                      alt={p.title}
-                      className={styles.productImage}
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = defaultProductImage;
-                      }}
-                    />
-                  </Link>
-
-                  <div className={styles.productInfo}>
-                    <h3>{p.title}</h3>
-                    <p>{p.description}</p>
-                    <div className={styles.productFooter}>
-                      <button
-                        onClick={() => {
-                          const cartItem = {
-                            id: p.id,
-                            name: p.title,
-                            price: Number(p.price),
-                            image: p.imageOrVideo?.[0] || p.image || defaultProductImage,
-                            quantity: 1,
-                          };
-                          addToCart(cartItem);
-                          alert("تمت إضافة المنتج إلى السلة");
+                    <Link to={`/product-details/${p.id}`}>
+                      <img
+                        src={p.imageOrVideo?.[0] || defaultProductImage}
+                        alt={p.title}
+                        className={styles.productImage}
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = defaultProductImage;
                         }}
-                        className={styles.cartButton}
-                      >
-                        <i className="fa-solid fa-cart-shopping text-lg" />
-                        <span className="font-semibold">{p.price}$</span>
-                      </button>
-                      <span className={styles.likes}>❤ {p.likes || 0}</span>
+                      />
+                    </Link>
+
+                    <div className={styles.productInfo}>
+                      <h3>{p.title}</h3>
+                      <p>{p.description}</p>
+                      <div className={styles.productFooter}>
+                        <button
+                          onClick={() => {
+                            const cartItem = {
+                              id: p.id,
+                              name: p.title,
+                              price: Number(p.price),
+                              image: p.imageOrVideo?.[0] || p.image || defaultProductImage,
+                              quantity: 1,
+                            };
+                            addToCart(cartItem);
+                            alert("تمت إضافة المنتج إلى السلة");
+                          }}
+                          className={styles.cartButton}
+                        >
+                          <svg 
+                            xmlns="http://www.w3.org/2000/svg" 
+                            width="20" 
+                            height="20" 
+                            fill="currentColor" 
+                            viewBox="0 0 16 16"
+                            style={{ marginLeft: '5px' }}
+                          >
+                            <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5zM3.102 4l1.313 7h8.17l1.313-7H3.102zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                          </svg>
+
+                          <span className="font-semibold">{p.price}$</span>
+                        </button>
+                        
+                        {/* زر المفضلة مع التحديث الفوري */}
+                        <div 
+                          className={`${styles.favoriteButton} ${isFavorite ? styles.favorited : ''}`}
+                          onClick={() => handleFavoriteClick(p.id)}
+                          title={isFavorite ? "إزالة من المفضلة" : "إضافة إلى المفضلة"}
+                        >
+                          <FaHeart className={isFavorite ? styles.favoriteIconActive : styles.favoriteIcon} />
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
             
             <div className={styles.pagination}>
