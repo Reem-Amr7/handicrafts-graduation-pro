@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../../Context/CartContext";
-
 import axios from "axios";
+import { ColorRing } from 'react-loader-spinner';
 import styles from "./Shop.module.css";
 import { useNavigate } from "react-router-dom";
 import { TokenContext } from "../../Context/TokenContext";
@@ -22,22 +21,6 @@ dayjs.locale("ar");
 
 const PRODUCTS_PER_PAGE = 9;
 
-// تعريف الفئات بالأسماء الإنجليزية كما في قاعدة البيانات
-const categories = [
-  { id: 1, name: "الدوس" },
-  { id: 2, name: "Woodworking" },
-  { id: 3, name: "Embroidery" },
-  { id: 4, name: "Metalworking" }
-];
-
-// كائن للتعيين بين الـ IDs والأسماء العربية
-const categoryNames = {
-  1: "الدوس",
-  2: "المعمار",
-  3: "منتجات الخاصة",
-  4: "السجاد الديوني"
-};
-
 const Shop = () => {
   const { token } = useContext(TokenContext);
   const [allProducts, setAllProducts] = useState([]);
@@ -51,6 +34,7 @@ const Shop = () => {
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [userMap, setUserMap] = useState({});
+  const [categories, setCategories] = useState([]);
 
   const [newProduct, setNewProduct] = useState({
     name: "",
@@ -65,6 +49,19 @@ const Shop = () => {
   
   const handleAddToCart = (product) => {
     addToCart(product);
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const res = await axios.get(
+        "https://ourheritage.runasp.net/api/Categories?PageIndex=1&PageSize=10",
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setCategories(res.data.items || []);
+    } catch (err) {
+      console.error("Error fetching categories:", err);
+      setCategories([]);
+    }
   };
 
   const fetchProducts = () => {
@@ -112,83 +109,75 @@ const Shop = () => {
     }
   };
 
- // ... بقية الكود ...
-
-const timeAgoCustom = (utcDateString) => {
-  if (!utcDateString) return "تاريخ غير متاح";
-  
-  try {
-    // إضافة وقت افتراضي إذا كان التاريخ فقط بدون وقت
-    let dateStr = utcDateString;
-    if (dateStr.length === 10) {
-      // استخدام وقت السيرفر الحالي بدلاً من وقت منتصف الليل
-      dateStr += "T" + new Date().toISOString().substring(11, 19) + "Z";
-    }
-
-    // استخدام التوقيت العالمي الموحد (UTC) للتاريخ الوارد
-    const date = dayjs.utc(dateStr);
-    if (!date.isValid()) return "تاريخ غير صالح";
+  const timeAgoCustom = (utcDateString) => {
+    if (!utcDateString) return "تاريخ غير متاح";
     
-    // الحصول على الوقت الحالي بالتوقيت العالمي الموحد (UTC)
-    const now = dayjs.utc();
-    const diffInMilliseconds = now.diff(date);
-    
-    // تحويل الفروق إلى وحدات زمنية
-    const diffInSeconds = Math.floor(diffInMilliseconds / 1000);
-    const diffInMinutes = Math.floor(diffInSeconds / 60);
-    const diffInHours = Math.floor(diffInMinutes / 60);
-    const diffInDays = Math.floor(diffInHours / 24);
-    const diffInWeeks = Math.floor(diffInDays / 7);
-    const diffInMonths = Math.floor(diffInDays / 30);
-    const diffInYears = Math.floor(diffInMonths / 12);
-  
-    // حساب دقيق مع مراعاة اللغة العربية
-    if (diffInSeconds < 5) {
-      return 'الآن';
-    } else if (diffInSeconds < 60) {
-      return `منذ ${diffInSeconds} ثانية`;
-    } else if (diffInMinutes < 60) {
-      if (diffInMinutes === 1) return 'منذ دقيقة واحدة';
-      if (diffInMinutes === 2) return 'منذ دقيقتين';
-      if (diffInMinutes >= 3 && diffInMinutes <= 10) return `منذ ${diffInMinutes} دقائق`;
-      return `منذ ${diffInMinutes} دقيقة`;
-    } else if (diffInHours < 24) {
-      if (diffInHours === 1) return 'منذ ساعة واحدة';
-      if (diffInHours === 2) return 'منذ ساعتين';
-      if (diffInHours >= 3 && diffInHours <= 10) return `منذ ${diffInHours} ساعات`;
-      return `منذ ${diffInHours} ساعة`;
-    } else if (diffInDays < 7) {
-      if (diffInDays === 1) return 'منذ يوم واحد';
-      if (diffInDays === 2) return 'منذ يومين';
-      if (diffInDays >= 3 && diffInDays <= 10) return `منذ ${diffInDays} أيام`;
-      return `منذ ${diffInDays} يوم`;
-    } else if (diffInWeeks < 4) {
-      if (diffInWeeks === 1) return 'منذ أسبوع واحد';
-      if (diffInWeeks === 2) return 'منذ أسبوعين';
-      if (diffInWeeks >= 3 && diffInWeeks <= 10) return `منذ ${diffInWeeks} أسابيع`;
-      return `منذ ${diffInWeeks} أسبوع`;
-    } else if (diffInMonths < 12) {
-      if (diffInMonths === 1) return 'منذ شهر واحد';
-      if (diffInMonths === 2) return 'منذ شهرين';
-      if (diffInMonths >= 3 && diffInMonths <= 10) return `منذ ${diffInMonths} أشهر`;
-      return `منذ ${diffInMonths} شهر`;
-    } else {
-      if (diffInYears === 1) return 'منذ سنة واحدة';
-      if (diffInYears === 2) return 'منذ سنتين';
-      if (diffInYears >= 3 && diffInYears <= 10) return `منذ ${diffInYears} سنوات`;
-      return `منذ ${diffInYears} سنة`;
-    }
-  } catch (error) {
-    console.error("خطأ في حساب التاريخ:", error, "التاريخ:", utcDateString);
-    return "تاريخ غير متاح";
-  }
-};
-  // ... (بقية الكود يبقى كما هو) ...
+    try {
+      let dateStr = utcDateString;
+      if (dateStr.length === 10) {
+        dateStr += "T" + new Date().toISOString().substring(11, 19) + "Z";
+      }
 
-// ... بقية الكود ...
+      const date = dayjs.utc(dateStr);
+      if (!date.isValid()) return "تاريخ غير صالح";
+      
+      const now = dayjs.utc();
+      const diffInMilliseconds = now.diff(date);
+      
+      const diffInSeconds = Math.floor(diffInMilliseconds / 1000);
+      const diffInMinutes = Math.floor(diffInSeconds / 60);
+      const diffInHours = Math.floor(diffInMinutes / 60);
+      const diffInDays = Math.floor(diffInHours / 24);
+      const diffInWeeks = Math.floor(diffInDays / 7);
+      const diffInMonths = Math.floor(diffInDays / 30);
+      const diffInYears = Math.floor(diffInMonths / 12);
+    
+      if (diffInSeconds < 5) {
+        return 'الآن';
+      } else if (diffInSeconds < 60) {
+        return `منذ ${diffInSeconds} ثانية`;
+      } else if (diffInMinutes < 60) {
+        if (diffInMinutes === 1) return 'منذ دقيقة واحدة';
+        if (diffInMinutes === 2) return 'منذ دقيقتين';
+        if (diffInMinutes >= 3 && diffInMinutes <= 10) return `منذ ${diffInMinutes} دقائق`;
+        return `منذ ${diffInMinutes} دقيقة`;
+      } else if (diffInHours < 24) {
+        if (diffInHours === 1) return 'منذ ساعة واحدة';
+        if (diffInHours === 2) return 'منذ ساعتين';
+        if (diffInHours >= 3 && diffInHours <= 10) return `منذ ${diffInHours} ساعات`;
+        return `منذ ${diffInHours} ساعة`;
+      } else if (diffInDays < 7) {
+        if (diffInDays === 1) return 'منذ يوم واحد';
+        if (diffInDays === 2) return 'منذ يومين';
+        if (diffInDays >= 3 && diffInDays <= 10) return `منذ ${diffInDays} أيام`;
+        return `منذ ${diffInDays} يوم`;
+      } else if (diffInWeeks < 4) {
+        if (diffInWeeks === 1) return 'منذ أسبوع واحد';
+        if (diffInWeeks === 2) return 'منذ أسبوعين';
+        if (diffInWeeks >= 3 && diffInWeeks <= 10) return `منذ ${diffInWeeks} أسابيع`;
+        return `منذ ${diffInWeeks} أسبوع`;
+      } else if (diffInMonths < 12) {
+        if (diffInMonths === 1) return 'منذ شهر واحد';
+        if (diffInMonths === 2) return 'منذ شهرين';
+        if (diffInMonths >= 3 && diffInMonths <= 10) return `منذ ${diffInMonths} أشهر`;
+        return `منذ ${diffInMonths} شهر`;
+      } else {
+        if (diffInYears === 1) return 'منذ سنة واحدة';
+        if (diffInYears === 2) return 'منذ سنتين';
+        if (diffInYears >= 3 && diffInYears <= 10) return `منذ ${diffInYears} سنوات`;
+        return `منذ ${diffInYears} سنة`;
+      }
+    } catch (error) {
+      console.error("خطأ في حساب التاريخ:", error, "التاريخ:", utcDateString);
+      return "تاريخ غير متاح";
+    }
+  };
 
   useEffect(() => {
-    if (token) fetchProducts();
+    if (token) {
+      fetchCategories();
+      fetchProducts();
+    }
   }, [token]);
   
   useEffect(() => {
@@ -313,8 +302,7 @@ const timeAgoCustom = (utcDateString) => {
                   )
                 }
               />
-              {/* استخدام الأسماء العربية من كائن التعيين */}
-              {categoryNames[cat.id] || cat.name}
+              {cat.name}
             </label>
           ))}
         </div>
@@ -390,8 +378,7 @@ const timeAgoCustom = (utcDateString) => {
                 <option value="">اختر الفئة</option>
                 {categories.map((cat) => (
                   <option key={cat.id} value={cat.id}>
-                    {/* استخدام الأسماء العربية من كائن التعيين */}
-                    {categoryNames[cat.id] || cat.name}
+                    {cat.name}
                   </option>
                 ))}
               </select>
@@ -413,7 +400,17 @@ const timeAgoCustom = (utcDateString) => {
 
       <div className={styles.mainContent}>
         {loading ? (
-          <div className={styles.loading}>جار التحميل...</div>
+          <div className="h-screen flex justify-center items-center">
+            <ColorRing
+              visible={true}
+              height="80"
+              width="80"
+              ariaLabel="color-ring-loading"
+              wrapperStyle={{}}
+              wrapperClass="color-ring-wrapper"
+              colors={['#e15b64', '#f47e60', '#f8b26a', '#abbd81', '#849b87']}
+            />
+          </div>
         ) : (
           <>
             <div className={styles.productsGrid}>
