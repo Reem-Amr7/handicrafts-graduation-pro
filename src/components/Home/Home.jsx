@@ -6,23 +6,25 @@ import LeftSidebar from './Leftside';
 import Maincontent from './Maincontent';
 import RightSidebar from './Rightside';
 
-import { useNavigate } from "react-router-dom";
-
 export default function Home() {
   return (
-    <div className="overflow-x-hidden">                {/* ← هنا */}
+    <div className="mt-24">
       <div className="community-container max-w-[1400px] mx-auto my-6 px-4 flex flex-col lg:flex-row gap-4">
-        <div className="hidden lg:block">
+        
+        {/* Left Sidebar - Sticky + Scroll داخلي + إخفاء Scrollbar */}
+        <div className="hidden lg:block sticky top-28 self-start z-20 max-h-[calc(100vh-7rem)] overflow-y-auto scrollbar-hide pr-2">
           <LeftSidebar />
         </div>
 
-        <Maincontent className="flex-1 w-full overflow-x-hidden" />  {/* ← خليها w-full و flex-1 */}
+        {/* Main Content */}
+        <Maincontent className="flex-1 w-full overflow-x-hidden" />
 
-        <div className="hidden lg:block  ">
+        {/* Right Sidebar - Sticky + Scroll داخلي + إخفاء Scrollbar */}
+        <div className="hidden lg:block sticky top-28 self-start z-20 max-h-[calc(100vh-7rem)] overflow-y-auto scrollbar-hide pl-2">
           <RightSidebar />
         </div>
+
       </div>
     </div>
   );
 }
-

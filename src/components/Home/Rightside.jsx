@@ -75,7 +75,7 @@ const RightSidebar = () => {
 
       {/* —— سلايدر منتجات —— */}
       {crafts.length > 0 && (
-        <div className="sidebar-card bg-white rounded-xl shadow-lg p-4 border-t-4 border-[#2E8B57] flex flex-col items-center h-[460px]">
+        <div className="sidebar-card bg-white rounded-xl shadow-lg p-4 border-t-4 border-[#B22222] flex flex-col items-center h-[460px]">
           <h3 className="text-base mb-3 text-[#2E8B57] font-bold">منتجات مقترحة</h3>
 
           <div

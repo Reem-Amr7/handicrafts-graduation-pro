@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-// import { TokenContext } from '../../Context/TokenContext';
 import {
   FaArrowLeft, FaLayerGroup, FaNewspaper, FaHammer, FaChartBar, 
   FaSpinner, FaFire, FaStar, FaEye, FaPalette, FaCalendar, FaTrash
@@ -17,8 +16,7 @@ export default function PopularCategories() {
   const [totalItems, setTotalItems] = useState(0);
   const [deleteLoading, setDeleteLoading] = useState(null);
   
-  // Mock token for demo - replace with real token context
-const { token } = useContext(TokenContext);
+  const { token } = useContext(TokenContext);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -151,7 +149,7 @@ const { token } = useContext(TokenContext);
           
           // Show success message
           const successMsg = document.createElement('div');
-          successMsg.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+          successMsg.className = 'fixed top-4 right-4 bg-[#52796f] text-white px-6 py-3 rounded-lg shadow-lg z-50';
           successMsg.textContent = 'تم حذف الفئة بنجاح';
           document.body.appendChild(successMsg);
           setTimeout(() => {
@@ -192,7 +190,7 @@ const { token } = useContext(TokenContext);
         
         // For development: show more detailed error
         const errorDetails = document.createElement('div');
-        errorDetails.className = 'fixed bottom-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-lg z-50 max-w-md';
+        errorDetails.className = 'fixed bottom-4 right-4 bg-[#a44a3f]/10 border border-[#a44a3f] text-[#a44a3f] px-4 py-3 rounded-lg shadow-lg z-50 max-w-md';
         errorDetails.innerHTML = `
           <div class="font-bold">تفاصيل الخطأ للمطورين:</div>
           <div class="text-sm mt-1">
@@ -215,23 +213,23 @@ const { token } = useContext(TokenContext);
   };
 
   const getPopularityLevel = (totalCount) => {
-    if (totalCount >= 20) return { level: 'عالي جداً', color: 'text-green-600 bg-green-100', icon: FaFire };
-    if (totalCount >= 10) return { level: 'عالي', color: 'text-blue-600 bg-blue-100', icon: FaEye };
-    if (totalCount >= 5) return { level: 'متوسط', color: 'text-yellow-600 bg-yellow-100', icon: FaStar };
-    return { level: 'منخفض', color: 'text-gray-600 bg-gray-100', icon: FaPalette };
+    if (totalCount >= 20) return { level: 'عالي جداً', color: 'text-white bg-[#b08968]', icon: FaFire };
+    if (totalCount >= 10) return { level: 'عالي', color: 'text-white bg-[#9c6644]', icon: FaEye };
+    if (totalCount >= 5) return { level: 'متوسط', color: 'text-white bg-[#a44a3f]', icon: FaStar };
+    return { level: 'منخفض', color: 'text-white bg-[#52796f]', icon: FaPalette };
   };
 
   const getRankIcon = (index) => {
-    if (index === 0) return <FaFire className="text-red-500 text-lg" />;
-    if (index === 1) return <FaStar className="text-yellow-500 text-lg" />;
-    if (index === 2) return <FaEye className="text-blue-500 text-lg" />;
-    return <span className="text-gray-500 font-bold">#{index + 1}</span>;
+    if (index === 0) return <FaFire className="text-[#b08968] text-lg" />;
+    if (index === 1) return <FaStar className="text-[#9c6644] text-lg" />;
+    if (index === 2) return <FaEye className="text-[#a44a3f] text-lg" />;
+    return <span className="text-[#6e4c2f] font-bold">#{index + 1}</span>;
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen p-8 bg-gray-100 flex items-center justify-center">
-        <div className="flex items-center gap-3 text-blue-600">
+      <div className="min-h-screen p-8 bg-[#fefaf4] flex items-center justify-center">
+        <div className="flex items-center gap-3 text-[#b08968]">
           <FaSpinner className="animate-spin text-2xl" />
           <span className="text-lg">جاري تحميل إحصائيات الفئات...</span>
         </div>
@@ -241,15 +239,15 @@ const { token } = useContext(TokenContext);
 
   if (error) {
     return (
-      <div className="min-h-screen p-8 bg-gray-100">
+      <div className="min-h-screen p-8 bg-[#fefaf4]">
         <div className="max-w-6xl mx-auto">
-          <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
-            <div className="text-red-600 text-4xl mb-4">⚠️</div>
-            <h2 className="text-xl font-bold text-red-800 mb-2">حدث خطأ</h2>
-            <p className="text-red-600">{error}</p>
+          <div className="bg-[#a44a3f]/10 border border-[#a44a3f]/20 rounded-xl p-6 text-center">
+            <div className="text-[#a44a3f] text-4xl mb-4">⚠️</div>
+            <h2 className="text-xl font-bold text-[#5e3c23] mb-2">حدث خطأ</h2>
+            <p className="text-[#a44a3f]">{error}</p>
             <button 
               onClick={() => window.location.href = '/'}
-              className="mt-4 inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+              className="mt-4 inline-flex items-center gap-2 bg-[#b08968] text-white px-4 py-2 rounded-lg hover:bg-[#a7724e]"
             >
               <FaArrowLeft /> العودة للداشبورد
             </button>
@@ -264,23 +262,23 @@ const { token } = useContext(TokenContext);
   const totalContent = categories.reduce((sum, category) => sum + category.totalCount, 0);
 
   return (
-    <div className="min-h-screen p-8 bg-gray-100">
+    <div className="min-h-screen p-8 bg-[#fefaf4]">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
             <button 
               onClick={() => window.location.href = '/'}
-              className="bg-white p-3 rounded-xl shadow hover:shadow-md transition"
+              className="bg-[#f5eee6] p-3 rounded-xl shadow hover:shadow-md transition border border-[#e0c9b9]"
             >
-              <FaArrowLeft className="text-blue-600" />
+              <FaArrowLeft className="text-[#b08968]" />
             </button>
             <div>
-              <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
-                <FaLayerGroup className="text-blue-600" />
+              <h1 className="text-3xl font-bold text-[#5e3c23] flex items-center gap-3">
+                <FaLayerGroup className="text-[#b08968]" />
                 إحصائيات الفئات
               </h1>
-              <p className="text-gray-600 mt-1">
+              <p className="text-[#6e4c2f] mt-1">
                 إدارة وعرض إحصائيات الفئات والمحتوى - إجمالي {totalItems} فئة
               </p>
             </div>
@@ -289,64 +287,64 @@ const { token } = useContext(TokenContext);
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow p-6">
+          <div className="bg-[#f5eee6] rounded-xl shadow p-6 border border-[#e0c9b9]">
             <div className="flex items-center gap-4">
-              <FaLayerGroup className="text-blue-600 text-3xl" />
+              <FaLayerGroup className="text-[#b08968] text-3xl" />
               <div>
-                <h3 className="text-gray-500 text-sm">إجمالي الفئات</h3>
-                <p className="text-2xl font-bold">{totalItems}</p>
+                <h3 className="text-[#6e4c2f] text-sm">إجمالي الفئات</h3>
+                <p className="text-2xl font-bold text-[#9c6644]">{totalItems}</p>
               </div>
             </div>
           </div>
           
-          <div className="bg-white rounded-xl shadow p-6">
+          <div className="bg-[#f5eee6] rounded-xl shadow p-6 border border-[#e0c9b9]">
             <div className="flex items-center gap-4">
-              <FaNewspaper className="text-green-600 text-3xl" />
+              <FaNewspaper className="text-[#b08968] text-3xl" />
               <div>
-                <h3 className="text-gray-500 text-sm">إجمالي المقالات</h3>
-                <p className="text-2xl font-bold">{totalArticles}</p>
+                <h3 className="text-[#6e4c2f] text-sm">إجمالي المقالات</h3>
+                <p className="text-2xl font-bold text-[#52796f]">{totalArticles}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow p-6">
+          <div className="bg-[#f5eee6] rounded-xl shadow p-6 border border-[#e0c9b9]">
             <div className="flex items-center gap-4">
-              <FaHammer className="text-orange-600 text-3xl" />
+              <FaHammer className="text-[#b08968] text-3xl" />
               <div>
-                <h3 className="text-gray-500 text-sm">إجمالي الحرف</h3>
-                <p className="text-2xl font-bold">{totalHandicrafts}</p>
+                <h3 className="text-[#6e4c2f] text-sm">إجمالي الحرف</h3>
+                <p className="text-2xl font-bold text-[#a44a3f]">{totalHandicrafts}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow p-6">
+          <div className="bg-[#f5eee6] rounded-xl shadow p-6 border border-[#e0c9b9]">
             <div className="flex items-center gap-4">
-              <FaChartBar className="text-purple-600 text-3xl" />
+              <FaChartBar className="text-[#b08968] text-3xl" />
               <div>
-                <h3 className="text-gray-500 text-sm">إجمالي المحتوى</h3>
-                <p className="text-2xl font-bold">{totalContent}</p>
+                <h3 className="text-[#6e4c2f] text-sm">إجمالي المحتوى</h3>
+                <p className="text-2xl font-bold text-[#b08968]">{totalContent}</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Categories Table */}
-        <div className="bg-white rounded-xl shadow overflow-hidden">
-          <div className="p-6 border-b bg-gray-50">
-            <h2 className="text-xl font-bold text-gray-800">قائمة الفئات وإحصائياتها</h2>
+        <div className="bg-[#f5eee6] rounded-xl shadow overflow-hidden border border-[#e0c9b9]">
+          <div className="p-6 border-b bg-[#e0c9b9]">
+            <h2 className="text-xl font-bold text-[#5e3c23]">قائمة الفئات وإحصائياتها</h2>
           </div>
           
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b">
+              <thead className="bg-[#e0c9b9] border-b border-[#e0c9b9]">
                 <tr>
-                  <th className="p-4 text-right text-sm font-semibold text-gray-700">الترتيب</th>
-                  <th className="p-4 text-right text-sm font-semibold text-gray-700">اسم الفئة</th>
-                  <th className="p-4 text-center text-sm font-semibold text-gray-700">عدد المقالات</th>
-                  <th className="p-4 text-center text-sm font-semibold text-gray-700">عدد الحرف</th>
-                  <th className="p-4 text-center text-sm font-semibold text-gray-700">إجمالي المحتوى</th>
-                  <th className="p-4 text-center text-sm font-semibold text-gray-700">مستوى النشاط</th>
-                  <th className="p-4 text-center text-sm font-semibold text-gray-700">إجراءات</th>
+                  <th className="p-4 text-right text-sm font-semibold text-[#5e3c23]">الترتيب</th>
+                  <th className="p-4 text-right text-sm font-semibold text-[#5e3c23]">اسم الفئة</th>
+                  <th className="p-4 text-center text-sm font-semibold text-[#5e3c23]">عدد المقالات</th>
+                  <th className="p-4 text-center text-sm font-semibold text-[#5e3c23]">عدد الحرف</th>
+                  <th className="p-4 text-center text-sm font-semibold text-[#5e3c23]">إجمالي المحتوى</th>
+                  <th className="p-4 text-center text-sm font-semibold text-[#5e3c23]">مستوى النشاط</th>
+                  <th className="p-4 text-center text-sm font-semibold text-[#5e3c23]">إجراءات</th>
                 </tr>
               </thead>
               <tbody>
@@ -356,7 +354,7 @@ const { token } = useContext(TokenContext);
                   const PopularityIcon = popularity.icon;
                   
                   return (
-                    <tr key={category.categoryId} className="border-b hover:bg-gray-50 transition-colors">
+                    <tr key={category.categoryId} className="border-b border-[#e0c9b9] hover:bg-[#e0c9b9] transition-colors">
                       <td className="p-4">
                         <div className="flex items-center justify-center">
                           {getRankIcon(globalRank)}
@@ -364,30 +362,30 @@ const { token } = useContext(TokenContext);
                       </td>
                       <td className="p-4">
                         <div>
-                          <h4 className="font-semibold text-gray-800 mb-1">{category.categoryName}</h4>
-                          <p className="text-sm text-gray-500">ID: {category.categoryId}</p>
+                          <h4 className="font-semibold text-[#5e3c23] mb-1">{category.categoryName}</h4>
+                          <p className="text-sm text-[#6e4c2f]">ID: {category.categoryId}</p>
                         </div>
                       </td>
                       <td className="p-4 text-center">
                         <div className="flex items-center justify-center gap-1">
-                          <FaNewspaper className="text-green-500 text-sm" />
-                          <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm font-medium">
+                          <FaNewspaper className="text-[#52796f] text-sm" />
+                          <span className="bg-[#52796f] text-white px-2 py-1 rounded-full text-sm font-medium">
                             {category.articleCount}
                           </span>
                         </div>
                       </td>
                       <td className="p-4 text-center">
                         <div className="flex items-center justify-center gap-1">
-                          <FaHammer className="text-orange-500 text-sm" />
-                          <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-sm font-medium">
+                          <FaHammer className="text-[#a44a3f] text-sm" />
+                          <span className="bg-[#a44a3f] text-white px-2 py-1 rounded-full text-sm font-medium">
                             {category.handiCraftCount}
                           </span>
                         </div>
                       </td>
                       <td className="p-4 text-center">
                         <div className="flex items-center justify-center gap-1">
-                          <FaChartBar className="text-purple-500 text-sm" />
-                          <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-bold">
+                          <FaChartBar className="text-[#b08968] text-sm" />
+                          <span className="bg-[#b08968] text-white px-3 py-1 rounded-full text-sm font-bold">
                             {category.totalCount}
                           </span>
                         </div>
@@ -404,7 +402,7 @@ const { token } = useContext(TokenContext);
                         <button
                           onClick={() => handleDelete(category.categoryId)}
                           disabled={deleteLoading === category.categoryId}
-                          className="bg-red-100 hover:bg-red-200 text-red-600 p-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="bg-[#a44a3f] hover:bg-[#8b352d] text-white p-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           title="حذف الفئة"
                         >
                           {deleteLoading === category.categoryId ? (
@@ -424,17 +422,17 @@ const { token } = useContext(TokenContext);
           {/* Empty State */}
           {categories.length === 0 && !loading && (
             <div className="p-12 text-center">
-              <FaLayerGroup className="text-gray-400 text-5xl mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">لا توجد فئات</h3>
-              <p className="text-gray-500">لم يتم إنشاء أي فئات بعد</p>
+              <FaLayerGroup className="text-[#6e4c2f] text-5xl mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-[#5e3c23] mb-2">لا توجد فئات</h3>
+              <p className="text-[#6e4c2f]">لم يتم إنشاء أي فئات بعد</p>
             </div>
           )}
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="p-6 bg-gray-50 border-t">
+            <div className="p-6 bg-[#e0c9b9] border-t border-[#e0c9b9]">
               <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-[#5e3c23]">
                   عرض {((pageIndex - 1) * pageSize) + 1} إلى {Math.min(pageIndex * pageSize, totalItems)} من {totalItems} فئة
                 </div>
                 
@@ -442,7 +440,7 @@ const { token } = useContext(TokenContext);
                   <button
                     onClick={() => setPageIndex(prev => Math.max(prev - 1, 1))}
                     disabled={pageIndex === 1}
-                    className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="bg-[#f5eee6] border border-[#e0c9b9] text-[#5e3c23] px-4 py-2 rounded-lg hover:bg-[#e0c9b9] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     السابق
                   </button>
@@ -456,8 +454,8 @@ const { token } = useContext(TokenContext);
                           onClick={() => setPageIndex(page)}
                           className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                             pageIndex === page
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                              ? 'bg-[#b08968] text-white'
+                              : 'bg-[#f5eee6] border border-[#e0c9b9] text-[#5e3c23] hover:bg-[#e0c9b9]'
                           }`}
                         >
                           {page}
@@ -469,7 +467,7 @@ const { token } = useContext(TokenContext);
                   <button
                     onClick={() => setPageIndex(prev => Math.min(prev + 1, totalPages))}
                     disabled={pageIndex === totalPages}
-                    className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="bg-[#f5eee6] border border-[#e0c9b9] text-[#5e3c23] px-4 py-2 rounded-lg hover:bg-[#e0c9b9] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     التالي
                   </button>

@@ -133,7 +133,7 @@ export default function HandicraftRecommendation() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen mt-24 bg-gray-100">
       <div className="flex h-screen">
         {/* الجانب الأيمن - الفورم والنتائج */}
         <div className="w-1/2 p-6 overflow-y-auto bg-white border-l border-gray-300">
