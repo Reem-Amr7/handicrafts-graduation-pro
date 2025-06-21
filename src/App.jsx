@@ -29,6 +29,8 @@ import TopUsers from './components/Admin Dashboard/topUsers'
 import UsersManagement from './components/Admin Dashboard/allUsers'
 import PopularCategories from './components/Admin Dashboard/totalCategory'
 import UserActivityDetails from './components/Admin Dashboard/userActivity'
+import EngagementSummary from './components/Admin Dashboard/EngagementSummary'
+import RecommendationsPage from'./components/For You/RecommendationsPage'
 function App() {
   const routes = createBrowserRouter([
     {
@@ -60,7 +62,9 @@ function App() {
         { path:"/users", element:<UsersManagement />} ,
         { path:"/allcat", element:<PopularCategories />} ,
         { path: "/users/:userId", element: <UserActivityDetails /> },
+         { path:"/summary", element:<EngagementSummary />} ,
 
+{path:"/foryou",element:<RecommendationsPage/>},
 
 
 

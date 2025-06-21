@@ -39,6 +39,7 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalCulturalArticles: 0,
+    totalHandiCrafts: 0,
     totalLikes: 0,
     totalComments: 0,
     totalFollows: 0,
@@ -49,8 +50,15 @@ export default function AdminDashboard() {
   const [popularArticles, setPopularArticles] = useState([]);
   const [popularHandiCrafts, setPopularHandiCrafts] = useState([]);
 
-  // Authentication token - replace with your actual token
-const authToken = token;
+  // State for Add Admin modal
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [adminForm, setAdminForm] = useState({
+    username: '',
+    userId: '', // Changed from email to userId
+    role: 'Admin', // Default role
+  });
+  const [formError, setFormError] = useState('');
+  const [formSuccess, setFormSuccess] = useState('');
 
   // Calculate percentage change
   const calculatePercentageChange = (current, previous) => {
@@ -62,12 +70,11 @@ const authToken = token;
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Fetch admin statistics
         const adminStatsRes = await fetch(
           "https://ourheritage.runasp.net/api/Statistics/admin",
           {
             headers: {
-              Authorization: `Bearer ${authToken}`,
+              Authorization: `Bearer ${token}`,
               Accept: '*/*',
             },
           }
@@ -80,7 +87,6 @@ const authToken = token;
 
         const { model } = adminStatsResult;
 
-        // Update stats
         setStats({
           totalUsers: model.totalUsers,
           totalCulturalArticles: model.totalCulturalArticles,
@@ -92,15 +98,11 @@ const authToken = token;
           activeUsersToday: model.activeUsersToday,
         });
 
-        // Update total handicrafts
         setTotalHandicrafts(model.totalHandiCrafts);
-
-        // Update top active users, popular articles, and handicrafts
         setTopActiveUsers(model.topActiveUsers);
         setPopularArticles(model.popularArticles);
         setPopularHandiCrafts(model.popularHandiCrafts);
 
-        // Process monthly activity for the selected year
         const filteredMonthlyData = model.monthlyActivity
           .filter(activity => activity.year === selectedYear)
           .map((activity, index) => {
@@ -116,7 +118,6 @@ const authToken = token;
             };
           });
 
-        // Ensure all 12 months are represented
         const chartData = Array.from({ length: 12 }, (_, index) => {
           const month = index + 1;
           const monthName = monthNames[index].substring(0, 3);
@@ -134,12 +135,11 @@ const authToken = token;
 
         setMonthlyData(chartData);
 
-        // Fetch current month data
         const currentMonthRes = await fetch(
           "https://ourheritage.runasp.net/api/Statistics/current-month",
           {
             headers: {
-              Authorization: `Bearer ${authToken}`,
+              Authorization: `Bearer ${token}`,
             },
           }
         );
@@ -148,12 +148,11 @@ const authToken = token;
           setCurrentMonthData(currentMonthResult.model);
         }
 
-        // Fetch last month data
         const lastMonthRes = await fetch(
           "https://ourheritage.runasp.net/api/Statistics/last-month",
           {
             headers: {
-              Authorization: `Bearer ${authToken}`,
+              Authorization: `Bearer ${token}`,
             },
           }
         );
@@ -172,7 +171,94 @@ const authToken = token;
     };
 
     fetchData();
-  }, [selectedYear]);
+  }, [selectedYear, token]);
+
+  // Handle form input changes
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setAdminForm(prev => ({ ...prev, [name]: value }));
+    setFormError('');
+    setFormSuccess('');
+  };
+
+  // Handle form submission
+  const handleAddAdmin = async (e) => {
+    e.preventDefault();
+
+    // Basic validation
+    if (!adminForm.username || !adminForm.userId || !adminForm.role) {
+      setFormError('All fields are required.');
+      return;
+    }
+
+    // Validate userId is a positive integer
+    const userId = parseInt(adminForm.userId);
+    if (isNaN(userId) || userId <= 0) {
+      setFormError('Please enter a valid User ID (positive integer).');
+      return;
+    }
+
+    try {
+      // Step 1: Fetch User by ID
+      const userRes = await fetch(
+        `https://ourheritage.runasp.net/api/Users/${userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: '*/*',
+          },
+        }
+      );
+
+      if (!userRes.ok) {
+        const errorText = await userRes.text();
+        throw new Error(`Failed to fetch user: ${userRes.status} ${errorText}`);
+      }
+
+      const userData = await userRes.json();
+      if (!userData || !userData.id) {
+        throw new Error('User not found or invalid response.');
+      }
+
+      // Step 2: Assign role
+      const formData = new FormData();
+      formData.append('UserId', userData.id);
+      formData.append('RoleName', adminForm.role.toLowerCase()); // Map Admin/SuperAdmin to admin/superadmin
+
+      const response = await fetch('https://ourheritage.runasp.net/api/Auth/assign-role', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: '*/*',
+        },
+        body: formData,
+      });
+
+      if (response.ok) {
+        setFormSuccess('Admin role assigned successfully!');
+        setAdminForm({
+          username: '',
+          userId: '',
+          role: 'Admin',
+        });
+        setTimeout(() => {
+          setIsModalOpen(false);
+          setFormSuccess('');
+        }, 2000);
+      } else {
+        const errorText = await response.text();
+        console.error('Error assigning role:', response.status, errorText);
+        if (response.status === 401) {
+          setFormError('Unauthorized: Invalid or expired token. Please log in again.');
+        } else {
+          setFormError(`Failed to assign role: ${response.status} ${errorText}`);
+        }
+      }
+    } catch (err) {
+      console.error('Error assigning admin role:', err);
+      setFormError(`An error occurred: ${err.message}`);
+    }
+  };
 
   // Calculate totals from monthly data
   const yearlyTotals = monthlyData.reduce((acc, month) => ({
@@ -183,165 +269,202 @@ const authToken = token;
   }), { totalNewUsers: 0, totalNewArticles: 0, totalNewHandiCrafts: 0, totalEngagement: 0 });
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen mt-24 style={{ position: 'relative' }}">
       {/* Sidebar */}
-      <aside className="w-72 bg-gray-900 text-white p-6 space-y-6">
-        <h2 className="text-2xl font-bold">Admin Dashboard</h2>
-        <nav className="space-y-4">
-          <a href="#" className="flex items-center gap-2 hover:text-blue-400 text-blue-400">📊 Dashboard</a>
-          <a href="#" className="flex items-center gap-2 hover:text-blue-400">📋 Orders</a>
-          <Link 
-            to="/allcat" 
-            className="flex items-center gap-2 hover:text-blue-400"
-          >
+    <aside
+        className="w-72 bg-[#5e3c23] text-white p-6 space-y-6 fixed top-0 left-0  h-screen overflow-y-auto z-20"
+        style={{ position: 'fixed !important', height: '100vh' }}
+      >       
+       <nav className="space-y-4 mt-24">
+          <a href="#" className="flex items-center gap-2 hover:text-[#b08968] text-[#b08968]">📊 Dashboard</a>
+          <a href="#" className="flex items-center gap-2 hover:text-[#b08968]">📋 Orders</a>
+          <Link to="/allcat" className="flex items-center gap-2 hover:text-[#b08968]">
             📋 Total Categories
           </Link>
-          <Link 
-            to="/users" 
-            className="flex items-center gap-2 hover:text-blue-400"
-          >
+          <Link to="/users" className="flex items-center gap-2 hover:text-[#b08968]">
             👥 Users
-          </Link>     
-          <Link 
-            to="/top-users" 
-            className="flex items-center gap-2 hover:text-blue-400"
-          >
+          </Link>
+          <Link to="/top-users" className="flex items-center gap-2 hover:text-[#b08968]">
             👑 Top Users
           </Link>
-          <Link 
-            to="/Populararticles" 
-            className="flex items-center gap-2 hover:text-blue-400"
-          >
+          <Link to="/Populararticles" className="flex items-center gap-2 hover:text-[#b08968]">
             📰 Popular Articles
           </Link>
-          <a href="#" className="flex items-center gap-2 hover:text-blue-400">⚙️ Settings</a>
-          <a href="#" className="flex items-center gap-2 text-red-400 hover:text-red-500">🚪 Logout</a>
+          <a href="#" className="flex items-center gap-2 hover:text-[#b08968]">⚙️ Settings</a>
+          <a href="#" className="flex items-center gap-2 text-[#a44a3f] hover:text-[#8b352d]">🚪 Logout</a>
         </nav>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-8 bg-gray-100">
+      <main className="flex-1 p-8 bg-[#fefaf4] ml-72 overflow-y-auto min-h-screen">
         {/* Year Selection */}
         <div className="mb-6">
-          <div className="bg-white rounded-xl shadow p-4 flex items-center gap-4">
-            <div className="text-blue-600 text-3xl">📅</div>
+          <div className="bg-[#f5eee6] rounded-xl shadow p-4 flex items-center gap-4 border border-[#e0c9b9]">
+            <div className="text-[#b08968] text-3xl">📅</div>
             <div className="flex items-center gap-2">
-              <label className="text-gray-700 font-medium">Year:</label>
-              <select 
-                value={selectedYear} 
+              <label className="text-[#5e3c23] font-medium">Year:</label>
+              <select
+                value={selectedYear}
                 onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                className="border border-gray-300 rounded px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="border border-[#e0c9b9] rounded px-3 py-1 focus:outline-none focus:ring-2 focus:ring-[#b08968] bg-white"
               >
                 <option value={2024}>2024</option>
                 <option value={2025}>2025</option>
                 <option value={2026}>2026</option>
               </select>
             </div>
-            {loading && <div className="text-blue-600">Loading...</div>}
+            {loading && <div className="text-[#5e3c23]">Loading...</div>}
           </div>
         </div>
+
+        {/* Add Admin Modal */}
+        {isModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-[#f5eee6] rounded-xl p-6 w-full max-w-md border border-[#e0c9b9]">
+              <h3 className="text-lg font-semibold mb-4 text-[#5e3c23]">Assign Admin Role</h3>
+              <form onSubmit={handleAddAdmin}>
+                <div className="mb-4">
+                  <label className="block text-[#5e3c23] mb-2">Username</label>
+                  <input
+                    type="text"
+                    name="username"
+                    value={adminForm.username}
+                    onChange={handleInputChange}
+                    className="w-full border border-[#e0c9b9] rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#b08968] bg-white"
+                    placeholder="Enter username"
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="block text-[#5e3c23] mb-2">User ID</label>
+                  <input
+                    type="number"
+                    name="userId"
+                    value={adminForm.userId}
+                    onChange={handleInputChange}
+                    className="w-full border border-[#e0c9b9] rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#b08968] bg-white"
+                    placeholder="Enter user ID"
+                    min="1"
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="block text-[#5e3c23] mb-2">Role</label>
+                  <select
+                    name="role"
+                    value={adminForm.role}
+                    onChange={handleInputChange}
+                    className="w-full border border-[#e0c9b9] rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#b08968] bg-white"
+                  >
+                    <option value="Admin">Admin</option>
+                    <option value="SuperAdmin">SuperAdmin</option>
+                  </select>
+                </div>
+                {formError && <p className="text-[#a44a3f] text-sm mb-4">{formError}</p>}
+                {formSuccess && <p className="text-[#52796f] text-sm mb-4">{formSuccess}</p>}
+                <div className="flex justify-end gap-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsModalOpen(false);
+                      setFormError('');
+                      setFormSuccess('');
+                    }}
+                    className="bg-[#e0c9b9] text-[#5e3c23] px-4 py-2 rounded hover:bg-[#d4b3a0]"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="bg-[#b08968] text-white px-4 py-2 rounded hover:bg-[#a7724e]"
+                  >
+                    Assign Role
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
 
         {/* Current Month vs Last Month Comparison */}
         {currentMonthData && lastMonthData && (
           <div className="mb-8">
-            <h3 className="text-xl font-bold mb-4 text-gray-800">📈 Monthly Comparison</h3>
+            <h3 className="text-xl font-bold mb-4 text-[#5e3c23]">📈 Monthly Comparison</h3>
             <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-              {/* New Users Comparison */}
-              <div className="bg-white rounded-xl shadow p-6">
+              <div className="bg-[#f5eee6] rounded-xl shadow p-6 border border-[#e0c9b9]">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="text-blue-600 text-3xl">👥</div>
-                  <div className={`text-sm px-2 py-1 rounded ${
-                    calculatePercentageChange(currentMonthData.newUsers, lastMonthData.newUsers) >= 0 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-red-100 text-red-800'
-                  }`}>
+                  <div className="text-[#b08968] text-3xl">👥</div>
+                  <div className={`text-sm px-2 py-1 rounded bg-[#e0c9b9] text-[#5e3c23]`}>
                     {calculatePercentageChange(currentMonthData.newUsers, lastMonthData.newUsers)}%
                   </div>
                 </div>
-                <h4 className="text-gray-500 mb-2">New Users</h4>
+                <h4 className="text-[#6e4c2f] mb-2">New Users</h4>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-2xl font-bold text-blue-600">{currentMonthData.newUsers}</p>
-                    <p className="text-sm text-gray-500">{currentMonthData.monthName}</p>
+                    <p className="text-2xl font-bold text-[#9c6644]">{currentMonthData.newUsers}</p>
+                    <p className="text-sm text-[#6e4c2f]">{currentMonthData.monthName}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-lg text-gray-600">{lastMonthData.newUsers}</p>
-                    <p className="text-sm text-gray-500">{lastMonthData.monthName}</p>
+                    <p className="text-lg text-[#6e4c2f]">{lastMonthData.newUsers}</p>
+                    <p className="text-sm text-[#6e4c2f]">{lastMonthData.monthName}</p>
                   </div>
                 </div>
               </div>
 
-              {/* New Articles Comparison */}
-              <div className="bg-white rounded-xl shadow p-6">
+              <div className="bg-[#f5eee6] rounded-xl shadow p-6 border border-[#e0c9b9]">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="text-green-600 text-3xl">📰</div>
-                  <div className={`text-sm px-2 py-1 rounded ${
-                    calculatePercentageChange(currentMonthData.newArticles, lastMonthData.newArticles) >= 0 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-red-100 text-red-800'
-                  }`}>
+                  <div className="text-[#b08968] text-3xl">📰</div>
+                  <div className={`text-sm px-2 py-1 rounded bg-[#e0c9b9] text-[#5e3c23]`}>
                     {calculatePercentageChange(currentMonthData.newArticles, lastMonthData.newArticles)}%
                   </div>
                 </div>
-                <h4 className="text-gray-500 mb-2">New Articles</h4>
+                <h4 className="text-[#6e4c2f] mb-2">New Articles</h4>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-2xl font-bold text-green-600">{currentMonthData.newArticles}</p>
-                    <p className="text-sm text-gray-500">{currentMonthData.monthName}</p>
+                    <p className="text-2xl font-bold text-[#52796f]">{currentMonthData.newArticles}</p>
+                    <p className="text-sm text-[#6e4c2f]">{currentMonthData.monthName}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-lg text-gray-600">{lastMonthData.newArticles}</p>
-                    <p className="text-sm text-gray-500">{lastMonthData.monthName}</p>
+                    <p className="text-lg text-[#6e4c2f]">{lastMonthData.newArticles}</p>
+                    <p className="text-sm text-[#6e4c2f]">{lastMonthData.monthName}</p>
                   </div>
                 </div>
               </div>
 
-              {/* New Handicrafts Comparison */}
-              <div className="bg-white rounded-xl shadow p-6">
+              <div className="bg-[#f5eee6] rounded-xl shadow p-6 border border-[#e0c9b9]">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="text-purple-600 text-3xl">🎨</div>
-                  <div className={`text-sm px-2 py-1 rounded ${
-                    calculatePercentageChange(currentMonthData.newHandiCrafts, lastMonthData.newHandiCrafts) >= 0 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-red-100 text-red-800'
-                  }`}>
+                  <div className="text-[#b08968] text-3xl">🎨</div>
+                  <div className={`text-sm px-2 py-1 rounded bg-[#e0c9b9] text-[#5e3c23]`}>
                     {calculatePercentageChange(currentMonthData.newHandiCrafts, lastMonthData.newHandiCrafts)}%
                   </div>
                 </div>
-                <h4 className="text-gray-500 mb-2">New Handicrafts</h4>
+                <h4 className="text-[#6e4c2f] mb-2">New Handicrafts</h4>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-2xl font-bold text-purple-600">{currentMonthData.newHandiCrafts}</p>
-                    <p className="text-sm text-gray-500">{currentMonthData.monthName}</p>
+                    <p className="text-2xl font-bold text-[#a44a3f]">{currentMonthData.newHandiCrafts}</p>
+                    <p className="text-sm text-[#6e4c2f]">{currentMonthData.monthName}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-lg text-gray-600">{lastMonthData.newHandiCrafts}</p>
-                    <p className="text-sm text-gray-500">{lastMonthData.monthName}</p>
+                    <p className="text-lg text-[#6e4c2f]">{lastMonthData.newHandiCrafts}</p>
+                    <p className="text-sm text-[#6e4c2f]">{lastMonthData.monthName}</p>
                   </div>
                 </div>
               </div>
 
-              {/* Total Engagement Comparison */}
-              <div className="bg-white rounded-xl shadow p-6">
+              <div className="bg-[#f5eee6] rounded-xl shadow p-6 border border-[#e0c9b9]">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="text-orange-600 text-3xl">📈</div>
-                  <div className={`text-sm px-2 py-1 rounded ${
-                    calculatePercentageChange(currentMonthData.totalEngagement, lastMonthData.totalEngagement) >= 0 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-red-100 text-red-800'
-                  }`}>
+                  <div className="text-[#b08968] text-3xl">📈</div>
+                  <div className={`text-sm px-2 py-1 rounded bg-[#e0c9b9] text-[#5e3c23]`}>
                     {calculatePercentageChange(currentMonthData.totalEngagement, lastMonthData.totalEngagement)}%
                   </div>
                 </div>
-                <h4 className="text-gray-500 mb-2">Total Engagement</h4>
+                <h4 className="text-[#6e4c2f] mb-2">Total Engagement</h4>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-2xl font-bold text-orange-600">{currentMonthData.totalEngagement}</p>
-                    <p className="text-sm text-gray-500">{currentMonthData.monthName}</p>
+                    <p className="text-2xl font-bold text-[#b08968]">{currentMonthData.totalEngagement}</p>
+                    <p className="text-sm text-[#6e4c2f]">{currentMonthData.monthName}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-lg text-gray-600">{lastMonthData.totalEngagement}</p>
-                    <p className="text-sm text-gray-500">{lastMonthData.monthName}</p>
+                    <p className="text-lg text-[#6e4c2f]">{lastMonthData.totalEngagement}</p>
+                    <p className="text-sm text-[#6e4c2f]">{lastMonthData.monthName}</p>
                   </div>
                 </div>
               </div>
@@ -351,123 +474,121 @@ const authToken = token;
 
         {/* Stats Cards */}
         <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-4 mb-8">
-          <div className="bg-white rounded-xl shadow p-4 flex items-center gap-4">
-            <div className="text-blue-600 text-3xl">👥</div>
+          <div className="bg-[#f5eee6] rounded-xl shadow p-4 flex items-center gap-4 border border-[#e0c9b9]">
+            <div className="text-[#b08968] text-3xl">👥</div>
             <div>
-              <h4 className="text-gray-500">Total Users</h4>
-              <p className="text-xl font-bold">{stats.totalUsers}</p>
-              <span className="text-sm text-blue-600">All time</span>
+              <h4 className="text-[#6e4c2f]">Total Users</h4>
+              <p className="text-xl font-bold text-[#9c6644]">{stats.totalUsers}</p>
+              <span className="text-sm text-[#b08968]">All time</span>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow p-4 flex items-center gap-4">
-            <div className="text-green-600 text-3xl">📰</div>
+          <div className="bg-[#f5eee6] rounded-xl shadow p-4 flex items-center gap-4 border border-[#e0c9b9]">
+            <div className="text-[#b08968] text-3xl">📰</div>
             <div>
-              <h4 className="text-gray-500">Total Articles</h4>
-              <p className="text-xl font-bold">{stats.totalCulturalArticles}</p>
-              <span className="text-sm text-green-600">All time</span>
+              <h4 className="text-[#6e4c2f]">Total Articles</h4>
+              <p className="text-xl font-bold text-[#52796f]">{stats.totalCulturalArticles}</p>
+              <span className="text-sm text-[#b08968]">All time</span>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow p-4 flex items-center gap-4">
-            <div className="text-purple-600 text-3xl">📦</div>
+          <div className="bg-[#f5eee6] rounded-xl shadow p-4 flex items-center gap-4 border border-[#e0c9b9]">
+            <div className="text-[#b08968] text-3xl">📦</div>
             <div>
-              <h4 className="text-gray-500">Total Handicrafts</h4>
-              <p className="text-xl font-bold">{stats.totalHandiCrafts}</p>
-              <span className="text-sm text-purple-600">All time</span>
+              <h4 className="text-[#6e4c2f]">Total Handicrafts</h4>
+              <p className="text-xl font-bold text-[#a44a3f]">{stats.totalHandiCrafts}</p>
+              <span className="text-sm text-[#b08968]">All time</span>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow p-4 flex items-center gap-4">
-            <div className="text-orange-600 text-3xl">📈</div>
+          <div className="bg-[#f5eee6] rounded-xl shadow p-4 flex items-center gap-4 border border-[#e0c9b9]">
+            <div className="text-[#b08968] text-3xl">📈</div>
             <div>
-              <h4 className="text-gray-500">Total Engagement ({selectedYear})</h4>
-              <p className="text-xl font-bold">{yearlyTotals.totalEngagement}</p>
-              <span className="text-sm text-orange-600">Total for year</span>
+              <h4 className="text-[#6e4c2f]">Total Engagement ({selectedYear})</h4>
+              <p className="text-xl font-bold text-[#b08968]">{yearlyTotals.totalEngagement}</p>
+              <span className="text-sm text-[#b08968]">Total for year</span>
             </div>
           </div>
 
-          {/* New Stats Cards */}
-          <div className="bg-white rounded-xl shadow p-4 flex items-center gap-4">
-            <div className="text-red-600 text-3xl">❤️</div>
+          <div className="bg-[#f5eee6] rounded-xl shadow p-4 flex items-center gap-4 border border-[#e0c9b9]">
+            <div className="text-[#b08968] text-3xl">❤️</div>
             <div>
-              <h4 className="text-gray-500">Total Likes</h4>
-              <p className="text-xl font-bold">{stats.totalLikes}</p>
-              <span className="text-sm text-red-600">All time</span>
+              <h4 className="text-[#6e4c2f]">Total Likes</h4>
+              <p className="text-xl font-bold text-[#9c6644]">{stats.totalLikes}</p>
+              <span className="text-sm text-[#b08968]">All time</span>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow p-4 flex items-center gap-4">
-            <div className="text-teal-600 text-3xl">💬</div>
+          <div className="bg-[#f5eee6] rounded-xl shadow p-4 flex items-center gap-4 border border-[#e0c9b9]">
+            <div className="text-[#b08968] text-3xl">💬</div>
             <div>
-              <h4 className="text-gray-500">Total Comments</h4>
-              <p className="text-xl font-bold">{stats.totalComments}</p>
-              <span className="text-sm text-teal-600">All time</span>
+              <h4 className="text-[#6e4c2f]">Total Comments</h4>
+              <p className="text-xl font-bold text-[#52796f]">{stats.totalComments}</p>
+              <span className="text-sm text-[#b08968]">All time</span>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow p-4 flex items-center gap-4">
-            <div className="text-indigo-600 text-3xl">👤➕</div>
+          <div className="bg-[#f5eee6] rounded-xl shadow p-4 flex items-center gap-4 border border-[#e0c9b9]">
+            <div className="text-[#b08968] text-3xl">👤➕</div>
             <div>
-              <h4 className="text-gray-500">Total Follows</h4>
-              <p className="text-xl font-bold">{stats.totalFollows}</p>
-              <span className="text-sm text-indigo-600">All time</span>
+              <h4 className="text-[#6e4c2f]">Total Follows</h4>
+              <p className="text-xl font-bold text-[#a44a3f]">{stats.totalFollows}</p>
+              <span className="text-sm text-[#b08968]">All time</span>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow p-4 flex items-center gap-4">
-            <div className="text-pink-600 text-3xl">📂</div>
+          <div className="bg-[#f5eee6] rounded-xl shadow p-4 flex items-center gap-4 border border-[#e0c9b9]">
+            <div className="text-[#b08968] text-3xl">📂</div>
             <div>
-              <h4 className="text-gray-500">Total Categories</h4>
-              <p className="text-xl font-bold">{stats.totalCategories}</p>
-              <span className="text-sm text-pink-600">All time</span>
+              <h4 className="text-[#6e4c2f]">Total Categories</h4>
+              <p className="text-xl font-bold text-[#9c6644]">{stats.totalCategories}</p>
+              <span className="text-sm text-[#b08968]">All time</span>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow p-4 flex items-center gap-4">
-            <div className="text-yellow-600 text-3xl">👀</div>
+          <div className="bg-[#f5eee6] rounded-xl shadow p-4 flex items-center gap-4 border border-[#e0c9b9]">
+            <div className="text-[#b08968] text-3xl">👀</div>
             <div>
-              <h4 className="text-gray-500">Active Users Today</h4>
-              <p className="text-xl font-bold">{stats.activeUsersToday}</p>
-              <span className="text-sm text-yellow-600">Today</span>
+              <h4 className="text-[#6e4c2f]">Active Users Today</h4>
+              <p className="text-xl font-bold text-[#52796f]">{stats.activeUsersToday}</p>
+              <span className="text-sm text-[#b08968]">Today</span>
             </div>
           </div>
         </div>
 
         {/* Charts */}
         <div className="grid gap-6 grid-cols-1 lg:grid-cols-2 mb-8">
-          {/* Monthly Activity Chart */}
-          <div className="bg-white p-6 rounded-xl shadow">
-            <h3 className="text-lg font-semibold mb-4">Monthly Activity Overview ({selectedYear})</h3>
+          <div className="bg-[#f5eee6] p-6 rounded-xl shadow border border-[#e0c9b9]">
+            <h3 className="text-lg font-semibold mb-4 text-[#5e3c23]">Monthly Activity Overview ({selectedYear})</h3>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={monthlyData}>
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip 
+                <XAxis dataKey="month" stroke="#5e3c23" />
+                <YAxis stroke="#5e3c23" />
+                <Tooltip
                   formatter={(value, name) => [value, name.replace(/([A-Z])/g, ' $1').trim()]}
                   labelFormatter={(label) => `Month: ${label}`}
+                  contentStyle={{ backgroundColor: '#f5eee6', borderColor: '#e0c9b9' }}
                 />
-                <Bar dataKey="newUsers" fill="#3B82F6" name="New Users" />
-                <Bar dataKey="newArticles" fill="#10B981" name="New Articles" />
-                <Bar dataKey="newHandiCrafts" fill="#8B5CF6" name="New Handicrafts" />
+                <Bar dataKey="newUsers" fill="#b08968" name="New Users" barSize={35} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="newArticles" fill="#9c6644" name="New Articles" barSize={35} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="newHandiCrafts" fill="#a44a3f" name="New Handicrafts" barSize={35} radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
 
-          {/* Engagement Trend */}
-          <div className="bg-white p-6 rounded-xl shadow">
-            <h3 className="text-lg font-semibold mb-4">Engagement Trend ({selectedYear})</h3>
+          <div className="bg-[#f5eee6] p-6 rounded-xl shadow border border-[#e0c9b9]">
+            <h3 className="text-lg font-semibold mb-4 text-[#5e3c23]">Engagement Trend ({selectedYear})</h3>
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={monthlyData}>
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Line 
-                  type="monotone" 
-                  dataKey="totalEngagement" 
-                  stroke="#F59E0B" 
+                <XAxis dataKey="month" stroke="#5e3c23" />
+                <YAxis stroke="#5e3c23" />
+                <Tooltip contentStyle={{ backgroundColor: '#f5eee6', borderColor: '#e0c9b9' }} />
+                <Line
+                  type="monotone"
+                  dataKey="totalEngagement"
+                  stroke="#b08968"
                   strokeWidth={3}
-                  dot={{ fill: '#F59E0B', strokeWidth: 2, r: 4 }}
+                  dot={{ fill: '#b08968', strokeWidth: 2, r: 4 }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -475,31 +596,31 @@ const authToken = token;
         </div>
 
         {/* Monthly Data Table */}
-        <div className="bg-white rounded-xl shadow p-6 mb-8">
-          <h3 className="text-lg font-semibold mb-4">Monthly Statistics ({selectedYear})</h3>
+        <div className="bg-[#f5eee6] rounded-xl shadow p-6 mb-8 border border-[#e0c9b9]">
+          <h3 className="text-lg font-semibold mb-4 text-[#5e3c23]">Monthly Statistics ({selectedYear})</h3>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b">
-                  <th className="text-left p-2">Month</th>
-                  <th className="text-left p-2">New Users</th>
-                  <th className="text-left p-2">New Articles</th>
-                  <th className="text-left p-2">New Handicrafts</th>
-                  <th className="text-left p-2">Total Engagement</th>
-                  <th className="text-left p-2">Activity Score</th>
+                <tr className="border-b border-[#e0c9b9]">
+                  <th className="text-left p-2 text-[#5e3c23]">Month</th>
+                  <th className="text-left p-2 text-[#5e3c23]">New Users</th>
+                  <th className="text-left p-2 text-[#5e3c23]">New Articles</th>
+                  <th className="text-left p-2 text-[#5e3c23]">New Handicrafts</th>
+                  <th className="text-left p-2 text-[#5e3c23]">Total Engagement</th>
+                  <th className="text-left p-2 text-[#5e3c23]">Activity Score</th>
                 </tr>
               </thead>
               <tbody>
                 {monthlyData.map((month, index) => (
-                  <tr key={index} className="border-b hover:bg-gray-50">
-                    <td className="p-2 font-medium">{monthNames[index]}</td>
-                    <td className="p-2">{month.newUsers}</td>
-                    <td className="p-2">{month.newArticles}</td>
-                    <td className="p-2">{month.newHandiCrafts}</td>
-                    <td className="p-2">{month.totalEngagement}</td>
+                  <tr key={index} className="border-b border-[#e0c9b9] hover:bg-[#e0c9b9]">
+                    <td className="p-2 font-medium text-[#5e3c23]">{monthNames[index]}</td>
+                    <td className="p-2 text-[#9c6644]">{month.newUsers}</td>
+                    <td className="p-2 text-[#52796f]">{month.newArticles}</td>
+                    <td className="p-2 text-[#a44a3f]">{month.newHandiCrafts}</td>
+                    <td className="p-2 text-[#b08968]">{month.totalEngagement}</td>
                     <td className="p-2">
                       <span className={`px-2 py-1 rounded text-xs ${
-                        month.totalActivity > 0 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                        month.totalActivity > 0 ? 'bg-[#b08968] text-white' : 'bg-[#e0c9b9] text-[#5e3c23]'
                       }`}>
                         {month.totalActivity}
                       </span>
@@ -513,111 +634,115 @@ const authToken = token;
 
         {/* Action Cards and Other Sections */}
         <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-          <div className="bg-white rounded-xl shadow p-6 flex items-center justify-between">
+          <div className="bg-[#f5eee6] rounded-xl shadow p-6 flex items-center justify-between border border-[#e0c9b9]">
             <div className="flex items-center gap-4">
-              <div className="text-blue-500 text-4xl">👤➕</div>
+              <div className="text-[#b08968] text-4xl">👤➕</div>
               <div>
-                <h4 className="text-lg font-semibold">Add New Admin</h4>
-                <p className="text-sm text-gray-500">Create and assign roles</p>
+                <h4 className="text-lg font-semibold text-[#5e3c23]">Assign Admin Role</h4>
+                <p className="text-sm text-[#6e4c2f]">Assign roles to existing users</p>
               </div>
             </div>
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Add Admin</button>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="bg-[#b08968] hover:bg-[#a7724e] text-white px-4 py-2 rounded"
+            >
+              Assign Role
+            </button>
           </div>
 
-          <div className="bg-white rounded-xl shadow p-6 flex items-center justify-between">
+          <div className="bg-[#f5eee6] rounded-xl shadow p-6 flex items-center justify-between border border-[#e0c9b9]">
             <div className="flex items-center gap-4">
-              <div className="text-yellow-500 text-4xl">👑</div>
+              <div className="text-[#b08968] text-4xl">👑</div>
               <div>
-                <h4 className="text-lg font-semibold">Top Active Users</h4>
-                <p className="text-sm text-gray-500">View most active users</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow p-6 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="text-purple-600 text-4xl">📦</div>
-              <div>
-                <h4 className="text-lg font-semibold">Total Handicrafts</h4>
-                <p className="text-xl font-bold">{totalHandicrafts}</p>
+                <h4 className="text-lg font-semibold text-[#5e3c23]">Top Active Users</h4>
+                <p className="text-sm text-[#6e4c2f]">View most active users</p>
               </div>
             </div>
           </div>
 
-          {/* Recent Orders */}
-          <div className="bg-white p-4 rounded-xl shadow">
-            <h3 className="text-lg font-semibold mb-4">Recent Orders</h3>
+          <div className="bg-[#f5eee6] rounded-xl shadow p-6 flex items-center justify-between border border-[#e0c9b9]">
+            <div className="flex items-center gap-4">
+              <div className="text-[#b08968] text-4xl">📦</div>
+              <div>
+                <h4 className="text-lg font-semibold text-[#5e3c23]">Total Handicrafts</h4>
+                <p className="text-xl font-bold text-[#a44a3f]">{totalHandicrafts}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-[#f5eee6] p-4 rounded-xl shadow border border-[#e0c9b9]">
+            <h3 className="text-lg font-semibold mb-4 text-[#5e3c23]">Recent Orders</h3>
             <ul className="space-y-2">
               {recentOrders.map((order, index) => (
                 <li key={index} className="flex justify-between text-sm">
-                  <span>{order.product}</span>
-                  <span className="text-gray-500">{order.price}</span>
+                  <span className="text-[#5e3c23]">{order.product}</span>
+                  <span className="text-[#6e4c2f]">{order.price}</span>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Top Customers */}
-          <div className="bg-white p-4 rounded-xl shadow">
-            <h3 className="text-lg font-semibold mb-4">Top Customers</h3>
+          <div className="bg-[#f5eee6] p-4 rounded-xl shadow border border-[#e0c9b9]">
+            <h3 className="text-lg font-semibold mb-4 text-[#5e3c23]">Top Customers</h3>
             <ul className="space-y-2">
               {topCustomers.map((cust, index) => (
                 <li key={index} className="flex justify-between text-sm">
                   <span className="flex items-center gap-2">
-                    <span className="text-purple-500">👤</span> {cust.name}
+                    <span className="text-[#b08968]">👤</span>
+                    <span className="text-[#5e3c23]">{cust.name}</span>
                   </span>
-                  <span className="text-gray-500">{cust.amount}</span>
+                  <span className="text-[#6e4c2f]">{cust.amount}</span>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Top Active Users */}
-          <div className="bg-white p-4 rounded-xl shadow">
-            <h3 className="text-lg font-semibold mb-4">Top Active Users</h3>
+          <div className="bg-[#f5eee6] p-4 rounded-xl shadow border border-[#e0c9b9]">
+            <h3 className="text-lg font-semibold mb-4 text-[#5e3c23]">Top Active Users</h3>
             <ul className="space-y-2">
               {topActiveUsers.map((user, index) => (
                 <li key={user.userId} className="flex justify-between text-sm">
                   <span className="flex items-center gap-2">
-                    <span className="text-yellow-500">👑</span> {user.userName}
+                    <span className="text-[#b08968]">👑</span>
+                    <span className="text-[#5e3c23]">{user.userName}</span>
                   </span>
-                  <span className="text-gray-500">Score: {user.activityScore}</span>
+                  <span className="text-[#6e4c2f]">Score: {user.activityScore}</span>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Popular Articles */}
-          <div className="bg-white p-4 rounded-xl shadow">
-            <h3 className="text-lg font-semibold mb-4">Popular Articles</h3>
+          <div className="bg-[#f5eee6] p-4 rounded-xl shadow border border-[#e0c9b9]">
+            <h3 className="text-lg font-semibold mb-4 text-[#5e3c23]">Popular Articles</h3>
             <ul className="space-y-2">
               {popularArticles.map((article, index) => (
                 <li key={article.id} className="flex justify-between text-sm">
-                  <span>{article.title}</span>
-                  <span className="text-gray-500">Likes: {article.likeCount}</span>
+                  <span className="text-[#5e3c23]">{article.title}</span>
+                  <span className="text-[#6e4c2f]">Likes: {article.likeCount}</span>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Popular Handicrafts */}
-          <div className="bg-white p-4 rounded-xl shadow">
-            <h3 className="text-lg font-semibold mb-4">Popular Handicrafts</h3>
+          <div className="bg-[#f5eee6] p-4 rounded-xl shadow border border-[#e0c9b9]">
+            <h3 className="text-lg font-semibold mb-4 text-[#5e3c23]">Popular Handicrafts</h3>
             <ul className="space-y-2">
               {popularHandiCrafts.map((craft, index) => (
                 <li key={craft.id} className="flex justify-between text-sm">
-                  <span>{craft.title}</span>
-                  <span className="text-gray-500">Favorites: {craft.favoriteCount}</span>
+                  <span className="text-[#5e3c23]">{craft.title}</span>
+                  <span className="text-[#6e4c2f]">Favorites: {craft.favoriteCount}</span>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* View Reports Button */}
-          <div className="bg-white p-4 rounded-xl shadow flex items-center justify-center">
-            <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+          <div className="bg-[#f5eee6] p-4 rounded-xl shadow flex items-center justify-center border border-[#e0c9b9]">
+            <Link
+              to="/summary"
+              className="bg-[#b08968] text-white px-4 py-2 rounded hover:bg-[#a7724e] transition-colors"
+            >
               View All Reports
-            </button>
+            </Link>
           </div>
         </div>
       </main>

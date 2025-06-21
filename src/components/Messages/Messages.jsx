@@ -538,6 +538,7 @@ export default function ChatApp() {
   }
 
   return (
+
     <div className="flex h-screen border border-gray-200" dir="rtl mt-24">
       {/* الشريط الجانبي */}
       <div
