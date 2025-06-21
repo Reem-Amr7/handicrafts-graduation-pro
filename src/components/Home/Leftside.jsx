@@ -1,9 +1,11 @@
+
 import React, { useState, useEffect, useContext } from 'react';
 import { FaFilter, FaStar, FaCalendarAlt, FaPaintBrush } from 'react-icons/fa';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { TokenContext } from '../../Context/TokenContext';
 import { CategoryContext } from '../../Context/CategoryContext';
+import profileimg from '../../assets/profile-icon-9.png';
 
 const LeftSidebar = () => {
   const [followedCraftsmen, setFollowedCraftsmen] = useState([]);
@@ -124,6 +126,10 @@ const LeftSidebar = () => {
     }
   };
 
+  const handleImageError = (e) => {
+    e.target.src = profileimg;
+  };
+
   return (
     <div className="community-sidebar left-sidebar w-[270px] order-2 lg:order-1 flex flex-col gap-4">
       {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
@@ -147,7 +153,7 @@ const LeftSidebar = () => {
                   className={`filter-tag bg-[#fcfcfb] px-3 py-1 rounded-full text-xs cursor-pointer transition border hover:bg-[#8B4513] hover:text-white hover:border-[#8B4513] ${
                     selectedCategory === category ? 'bg-[#8B4513] border-[#8B4513]' : ''
                   }`}
-                  onClick={() => setSelectedCategory(category)} // يتم التغيير هنا فقط
+                  onClick={() => setSelectedCategory(category)}
                 >
                   {category}
                 </span>
@@ -173,10 +179,11 @@ const LeftSidebar = () => {
                 className="craftsman-card flex items-center p-2 rounded transition border hover:bg-[#f0f0e0] hover:-translate-y-[2px]"
               >
                 <img
-                  src={friend.profilePicture || '/default-avatar.png'}
+                  src={friend.profilePicture || profileimg}
                   alt={`${friend.fullName || `${friend.firstName} ${friend.lastName}`}`}
                   className="w-8 h-8 rounded-full object-cover mr-2 border-2 border-[#D2B48C]"
                   loading="lazy"
+                  onError={handleImageError}
                 />
                 <div className="flex-1">
                   <Link to={`/profile/${friend.id}`}>
@@ -205,8 +212,6 @@ const LeftSidebar = () => {
           )}
         </div>
       </div>
-
-     
     </div>
   );
 };

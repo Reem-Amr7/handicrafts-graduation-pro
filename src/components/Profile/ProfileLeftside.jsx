@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useContext } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { Link } from 'react-router-dom';
@@ -7,6 +8,7 @@ import 'leaflet/dist/leaflet.css';
 import markerIconPng from "leaflet/dist/images/marker-icon.png";
 import { FaStar } from "react-icons/fa";
 import { TokenContext } from "../../Context/TokenContext";
+import profileimg from "../../assets/profile-icon-9.png";
 
 function FlyToCity({ coords }) {
   const map = useMap();
@@ -208,10 +210,14 @@ export default function ProfileLeftside({ userData, suggestedFriends, followedCr
     }
   };
 
+  const handleImageError = (e) => {
+    e.target.src = profileimg;
+  };
+
   const selectedCoords = userCity ? cityCoordinates[userCity] : [30.5, 34.5];
 
   return (
-    <aside className="col-span-4 mr-3 w-[350px] ml-3 p-8 sticky top-0 max-h-[100vh] overflow-y-auto scrollbar-hidden">
+    <aside className="col-span-4 mr-3 w-[350px] ml-3 p-8 sticky top-10 max-h-[100vh] overflow-y-auto scrollbar-hidden">
       <style>
         {`
           .scrollbar-hidden {
@@ -292,10 +298,11 @@ export default function ProfileLeftside({ userData, suggestedFriends, followedCr
                 className="craftsman-card flex items-center p-2 rounded transition border hover:bg-[#f0f0e0] hover:-translate-y-[2px]"
               >
                 <img
-                  src={friend.profilePicture ? friend.profilePicture : '/default-avatar.png'}
+                  src={friend.profilePicture || profileimg}
                   alt={`${friend.fullName || `${friend.firstName} ${friend.lastName}`}`}
                   className="w-8 h-8 rounded-full object-cover mr-2 border-2 border-[#D2B48C]"
                   loading="lazy"
+                  onError={handleImageError}
                 />
                 <div className="flex-1">
                   <Link to={`/profile/${friend.id}`}>
