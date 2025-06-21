@@ -5,6 +5,7 @@ import {
 } from "react-icons/fa";
 import { useContext } from "react";
 import { TokenContext } from "../../Context/TokenContext";
+import { Link } from 'react-router-dom'; // تأكدي إنك مستوردة Link
 
 export default function PopularCategories() {
   const [categories, setCategories] = useState([]);
@@ -239,8 +240,8 @@ export default function PopularCategories() {
 
   if (error) {
     return (
-      <div className="min-h-screen p-8 bg-[#fefaf4]">
-        <div className="max-w-6xl mx-auto">
+      <div className="min-h-screen p-8  bg-[#fefaf4]">
+        <div className="max-w-6xl  mx-auto">
           <div className="bg-[#a44a3f]/10 border border-[#a44a3f]/20 rounded-xl p-6 text-center">
             <div className="text-[#a44a3f] text-4xl mb-4">⚠️</div>
             <h2 className="text-xl font-bold text-[#5e3c23] mb-2">حدث خطأ</h2>
@@ -262,19 +263,19 @@ export default function PopularCategories() {
   const totalContent = categories.reduce((sum, category) => sum + category.totalCount, 0);
 
   return (
-    <div className="min-h-screen p-8 bg-[#fefaf4]">
+    <div className="min-h-screen p-8 mt-24 bg-[#fefaf4]">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
-            <button 
-              onClick={() => window.location.href = '/'}
-              className="bg-[#f5eee6] p-3 rounded-xl shadow hover:shadow-md transition border border-[#e0c9b9]"
-            >
-              <FaArrowLeft className="text-[#b08968]" />
-            </button>
-            <div>
-              <h1 className="text-3xl font-bold text-[#5e3c23] flex items-center gap-3">
+          <Link
+  to="/admin"
+  className="bg-[#f5eee6] p-3 rounded-xl shadow hover:shadow-md transition border border-[#e0c9b9]"
+>
+  <FaArrowLeft className="text-[#b08968]" />
+</Link>
+            <div className='w-52'>
+              <h1 className="text-3xl  w-72 font-bold text-[#5e3c23] flex items-center gap-3">
                 <FaLayerGroup className="text-[#b08968]" />
                 إحصائيات الفئات
               </h1>
