@@ -14,6 +14,7 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/ar";
 import timezone from 'dayjs/plugin/timezone';
 import { FaHeart } from "react-icons/fa";
+import profileimg from "../../assets/profile-icon-9.png";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -504,11 +505,17 @@ const Shop = () => {
                     <div className={styles.postHeader}>
                          <div className={styles.profileWrapper}>
                         <Link to={`/profile/${p.userId}`}>
-                          <img
-                            src={userMap[p.userId]?.profilePicture || prof1}
-                            alt="User"
-                            className={styles.profileImage}
-                          />
+     <img
+  src={userMap[p.userId]?.profilePicture || profileimg}
+  alt="User"
+  className={styles.profileImage}
+  onError={(e) => {
+    e.target.onerror = null;
+    e.target.src = profileimg;
+  }}
+/>
+
+
                         </Link>
                       </div>
                       <div>
