@@ -502,6 +502,15 @@ const Shop = () => {
                 return (
                   <div key={p.id} className={styles.productPost}>
                     <div className={styles.postHeader}>
+                         <div className={styles.profileWrapper}>
+                        <Link to={`/profile/${p.userId}`}>
+                          <img
+                            src={userMap[p.userId]?.profilePicture || prof1}
+                            alt="User"
+                            className={styles.profileImage}
+                          />
+                        </Link>
+                      </div>
                       <div>
                         <p className={styles.username}>
                           {userMap[p.userId]
@@ -512,15 +521,7 @@ const Shop = () => {
                           {p.dateAdded ? timeAgoCustom(p.dateAdded) : "تاريخ غير متاح"}
                         </p>
                       </div>
-                      <div className={styles.profileWrapper}>
-                        <Link to={`/profile/${p.userId}`}>
-                          <img
-                            src={userMap[p.userId]?.profilePicture || prof1}
-                            alt="User"
-                            className={styles.profileImage}
-                          />
-                        </Link>
-                      </div>
+                   
                     </div>
 
                     <Link to={`/product-details/${p.id}`}>
