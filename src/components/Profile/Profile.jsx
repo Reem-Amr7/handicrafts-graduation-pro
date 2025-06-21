@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
@@ -10,6 +11,8 @@ import { TokenContext } from "../../Context/TokenContext";
 import Like from '../Home/like';
 import Comment from '../Home/comment';
 import Repost from '../Home/Repost';
+import profileimg from "../../assets/profile-icon-9.png";
+import { ColorRing } from 'react-loader-spinner';
 
 export default function Profile() {
   const { id } = useParams();
@@ -45,10 +48,10 @@ export default function Profile() {
         `https://ourheritage.runasp.net/api/Users/${userId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      return res.data.profilePicture || "https://via.placeholder.com/40";
+      return res.data.profilePicture || profileimg;
     } catch (err) {
       console.error(`Error fetching profile picture for user ${userId}:`, err);
-      return "https://via.placeholder.com/40";
+      return profileimg;
     }
   };
 
@@ -95,7 +98,7 @@ export default function Profile() {
         setUserPosts(postsRes.data.items.filter((p) => p.userId == id));
       }
   
-      setProfilePicture(userRes.data.profilePicture || "https://via.placeholder.com/150");
+      setProfilePicture(userRes.data.profilePicture || profileimg);
       setCoverImage(userRes.data.coverProfilePicture || "https://via.placeholder.com/1500x500");
     } catch (err) {
       console.error(err);
@@ -370,7 +373,7 @@ export default function Profile() {
   };
 
   const handleImageError = (e) => {
-    e.target.src = "https://via.placeholder.com/40";
+    e.target.src = profileimg;
   };
 
   const toggleComments = (postId) => {
@@ -404,7 +407,7 @@ export default function Profile() {
   };
 
   const postImages = userPosts
-    .filter(post => post.imageURL && post.imageURL !== "https://via.placeholder.com/40")
+    .filter(post => post.imageURL)
     .map(post => ({
       id: post.id,
       imageURL: post.imageURL,
@@ -419,7 +422,19 @@ export default function Profile() {
     }, 0);
   };
 
-  if (loading) return <p className="text-center py-8">جاري تحميل البيانات...</p>;
+  if (loading) return (
+    <div className="h-screen flex justify-center items-center">
+      <ColorRing
+        visible={true}
+        height="80"
+        width="80"
+        ariaLabel="color-ring-loading"
+        wrapperStyle={{}}
+        wrapperClass="color-ring-wrapper"
+        colors={['#e15b64', '#f47e60', '#f8b26a', '#abbd81', '#849b87']}
+      />
+    </div>
+  );
   if (error) return <p className="text-red-600 text-center py-8">{error}</p>;
   if (!userData) return <p className="text-center py-8">لا يوجد بيانات</p>;
 
@@ -463,7 +478,7 @@ export default function Profile() {
             <div className={styles.profileInfo} style={{ position: 'absolute', bottom: '10px', left: '10px', padding: '10px', borderRadius: '10px', right: '10px' }}>
               <div className={styles.profilePictureLabel}>
                 <img
-                  src={profilePicture || userData.profilePicture || "https://via.placeholder.com/150"}
+                  src={profilePicture || userData.profilePicture || profileimg}
                   alt="Profile"
                   className={`${styles.profilePicture} ${id === currentUserId ? styles.editableProfile : ''}`}
                   onError={handleImageError}
@@ -585,7 +600,7 @@ export default function Profile() {
 
                   <div className="flex items-center gap-2 mb-4">
                     <img
-                      src={profilePicture || userData.profilePicture || "https://via.placeholder.com/50"}
+                      src={profilePicture || userData.profilePicture || profileimg}
                       alt="User"
                       className="w-12 h-12 border-2 border-red-900 rounded-full"
                       onError={handleImageError}
@@ -597,13 +612,12 @@ export default function Profile() {
                     </div>
                   </div>
 
-                  {post.imageURL && post.imageURL !== "https://via.placeholder.com/40" && (
+                  {post.imageURL && (
                     <div className="w-full h-96 rounded-md mb-4">
                       <img
                         src={post.imageURL}
                         alt="Post"
                         className="w-full h-full object-cover rounded-md"
-                        onError={handleImageError}
                       />
                     </div>
                   )}
@@ -618,9 +632,8 @@ export default function Profile() {
                         className="post-action flex items-center mr-3 text-gray-600 cursor-pointer transition hover:text-[#A0522D] text-sm"
                         onClick={() => toggleComments(post.id)}
                       >
-                       
                         <FaComment className="ml-1 text-gray-500 text-xl" /><span className='text-xl'>تعليق</span>
-                         <span className='text-xl mr-2 mt-1'>{post.commentCount || 0}</span>
+                        <span className='text-xl mr-2 mt-1'>{post.commentCount || 0}</span>
                       </div>
                     </div>
                     <div className="post-action flex items-center text-gray-600 cursor-pointer transition hover:text-[#A0522D] text-sm">
@@ -647,7 +660,6 @@ export default function Profile() {
                         src={image.imageURL}
                         alt="Post Image"
                         className={styles.postImage}
-                        onError={handleImageError}
                       />
                     </div>
                   ))}
@@ -666,7 +678,7 @@ export default function Profile() {
                   {followers.map(follower => (
                     <Link key={follower.id} to={`/profile/${follower.id}`} className={styles.friendCard}>
                       <img
-                        src={profilePictures[follower.id] || "https://via.placeholder.com/40"}
+                        src={profilePictures[follower.id] || profileimg}
                         alt={`${follower.userName || 'User'}'s profile`}
                         className={styles.friendImage}
                         onError={handleImageError}
@@ -689,7 +701,7 @@ export default function Profile() {
                   {following.map(followingUser => (
                     <Link key={followingUser.id} to={`/profile/${followingUser.id}`} className={styles.friendCard}>
                       <img
-                        src={profilePictures[followingUser.id] || "https://via.placeholder.com/40"}
+                        src={profilePictures[followingUser.id] || profileimg}
                         alt={`${followingUser.userName || 'User'}'s profile`}
                         className={styles.friendImage}
                         onError={handleImageError}
