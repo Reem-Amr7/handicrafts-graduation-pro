@@ -213,6 +213,7 @@ export default function Posty() {
             <option>الأحدث</option>
             <option>الأكثر تفاعلاً</option>
             <option>الأعلى تقييماً</option>
+            
           </select>
         </div>
       </div>

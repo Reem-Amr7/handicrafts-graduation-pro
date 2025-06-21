@@ -105,6 +105,8 @@ export default function Navbar() {
           <nav className="hidden md:block">
             <ul className="flex text-lg flex-row-reverse gap-6">
               <li><Link to="/admin" className={`${styles.navLink} ${location.pathname === '/admin' ? styles.activeLink : ''}`}>المنصة</Link></li>
+               <li><Link to="/foryou" className={`${styles.navLink} ${location.pathname === '/foryou' ? styles.activeLink : ''}`}>مقترح لك</Link></li>
+
               <li><Link to="/home2" className={`${styles.navLink} ${location.pathname === '/home2' ? styles.activeLink : ''}`}>الحرفيين</Link></li>
               <li><Link to="/shop" className={`${styles.navLink} ${location.pathname === '/shop' ? styles.activeLink : ''}`}>المتجر</Link></li>
               <li><Link to="/home" className={`${styles.navLink} ${location.pathname === '/home' ? styles.activeLink : ''}`}>المجتمع</Link></li>
