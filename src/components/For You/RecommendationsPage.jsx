@@ -1,133 +1,150 @@
 import React, { useState, useEffect, useContext } from 'react';
+import { Link } from 'react-router-dom';
 import { Heart, Share2, MessageCircle, Star, TrendingUp, Clock, Filter, RefreshCw, User, Calendar, Tag } from 'lucide-react';
 import { TokenContext } from '../../Context/TokenContext';
 
 const PostCard = ({ post, recommendation }) => (
-  <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 hover:scale-105">
-    <div className="p-6">
-      <div className="flex items-start justify-between mb-3">
-        <h3 className="font-bold text-xl text-[#5C4033] leading-tight">{post.title}</h3>
-        <div className="flex items-center bg-[#F5DEB3] px-2 py-1 rounded-full">
-          <Star className="w-4 h-4 text-[#8B4513] mr-1" />
-          <span className="text-sm font-medium text-[#5C4033]">{recommendation.score.toFixed(2)}</span>
+  <Link to={`/products/${post.itemId}`} className="block">
+    <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 hover:scale-105">
+      <div className="p-6">
+        {post.images?.[0] && (
+          <img
+            src={post.images[0]}
+            alt={post.title}
+            className="w-full h-48 object-cover rounded-lg mb-4"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = defaultImage;
+            }}
+          />
+        )}
+        <div className="flex items-start justify-between mb-3">
+          <h3 className="font-bold text-xl text-[#5C4033] leading-tight">{post.title}</h3>
+          <div className="flex items-center bg-[#F5DEB3] px-2 py-1 rounded-full">
+            <Star className="w-4 h-4 text-[#8B4513] mr-1" />
+            <span className="text-sm font-medium text-[#5C4033]">{recommendation.score.toFixed(2)}</span>
+          </div>
         </div>
-      </div>
-      
-      <p className="text-gray-600 text-sm mb-4 leading-relaxed">
-        {post.description && post.description.length > 5 ? post.description : 'لا يوجد وصف متاح'}
-      </p>
-      
-      <div className="flex items-center text-xs text-gray-500 mb-3 gap-4">
-        <div className="flex items-center gap-1">
-          <User className="w-3 h-3" />
-          <span>المستخدم #{post.userId}</span>
+        
+        <p className="text-gray-600 text-sm mb-4 leading-relaxed">
+          {post.content && post.content.length > 5 ? post.content : 'لا يوجد وصف متاح'}
+        </p>
+        
+        <div className="flex items-center text-xs text-gray-500 mb-3 gap-4">
+          <div className="flex items-center gap-1">
+            <User className="w-3 h-3" />
+            <span>{post.creator?.fullName || `المستخدم #${post.userId}`}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Calendar className="w-3 h-3" />
+            <span>{post.dateAdded ? new Date(post.dateAdded).toLocaleDateString('ar-EG') : 'غير متاح'}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Tag className="w-3 h-3" />
+            <span>{post.categoryName || 'غير محدد'}</span>
+          </div>
         </div>
-        <div className="flex items-center gap-1">
-          <Calendar className="w-3 h-3" />
-          <span>{new Date(post.dateAdded).toLocaleDateString('ar-EG')}</span>
+        
+        <div className="flex flex-wrap gap-1 mb-4">
+          {recommendation.recommendationFactors?.map((factor, index) => (
+            <span key={index} className="bg-[#E6D3A3] text-[#5C4033] px-2 py-1 rounded-full text-xs">
+              {factor}
+            </span>
+          ))  }
         </div>
-        <div className="flex items-center gap-1">
-          <Tag className="w-3 h-3" />
-          <span>الفئة #{post.categoryId}</span>
-        </div>
-      </div>
-      
-      <div className="bg-[#f8f6f0] p-3 rounded-lg mb-4">
-        <p className="text-xs text-[#5C4033] font-medium mb-2">سبب التوصية:</p>
-        <p className="text-xs text-gray-600">{recommendation.reasonForRecommendation}</p>
-      </div>
-      
-      <div className="flex flex-wrap gap-1 mb-4">
-        {recommendation.recommendationFactors.map((factor, index) => (
-          <span key={index} className="bg-[#E6D3A3] text-[#5C4033] px-2 py-1 rounded-full text-xs">
-            {factor}
+        
+        <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+          <div className="flex items-center gap-3">
+            <button className="flex items-center gap-1 text-gray-500 hover:text-red-500 transition-colors">
+              <Heart className="w-4 h-4" />
+              <span className="text-sm">إعجاب</span>
+            </button>
+            <button className="flex items-center gap-1 text-gray-500 hover:text-blue-500 transition-colors">
+              <Share2 className="w-4 h-4" />
+              <span className="text-sm">مشاركة</span>
+            </button>
+          </div>
+          <span className="text-xs bg-[#8B4513] text-white px-2 py-1 rounded-full">
+            منتج حرفي
           </span>
-        ))}
-      </div>
-      
-      <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-        <div className="flex items-center gap-3">
-          <button className="flex items-center gap-1 text-gray-500 hover:text-red-500 transition-colors">
-            <Heart className="w-4 h-4" />
-            <span className="text-sm">إعجاب</span>
-          </button>
-          <button className="flex items-center gap-1 text-gray-500 hover:text-blue-500 transition-colors">
-            <Share2 className="w-4 h-4" />
-            <span className="text-sm">مشاركة</span>
-          </button>
         </div>
-        <span className="text-xs bg-[#8B4513] text-white px-2 py-1 rounded-full">
-          {post.itemType === 'HandiCraft' ? 'منتج حرفي' : 'مقال ثقافي'}
-        </span>
       </div>
     </div>
-  </div>
+  </Link>
 );
 
 const CulturalCard = ({ item, recommendation }) => (
-  <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 hover:scale-105">
-    <div className="p-6">
-      <div className="flex items-start justify-between mb-3">
-        <h3 className="font-bold text-xl text-[#5C4033] leading-tight">{item.title}</h3>
-        <div className="flex items-center bg-[#F5DEB3] px-2 py-1 rounded-full">
-          <Star className="w-4 h-4 text-[#8B4513] mr-1" />
-          <span className="text-sm font-medium text-[#5C4033]">{recommendation.score.toFixed(2)}</span>
+  <Link to={`/articles/${item.itemId}`} className="block">
+    <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 hover:scale-105">
+      <div className="p-6">
+        {item.images?.[0] && (
+          <img
+            src={item.images[0]}
+            alt={item.title}
+            className="w-full h-48 object-cover rounded-lg mb-4"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = defaultImage;
+            }}
+          />
+        )}
+        <div className="flex items-start justify-between mb-3">
+          <h3 className="font-bold text-xl text-[#5C4033] leading-tight">{item.title}</h3>
+          <div className="flex items-center bg-[#F5DEB3] px-2 py-1 rounded-full">
+            <Star className="w-4 h-4 text-[#8B4513] mr-1" />
+            <span className="text-sm font-medium text-[#5C4033]">{recommendation.score.toFixed(2)}</span>
+          </div>
         </div>
-      </div>
-      
-      <p className="text-gray-600 text-sm mb-4 leading-relaxed">
-        {item.description && item.description.length > 5 ? item.description : 'لا يوجد وصف متاح'}
-      </p>
-      
-      <div className="flex items-center text-xs text-gray-500 mb-3 gap-4">
-        <div className="flex items-center gap-1">
-          <User className="w-3 h-3" />
-          <span>الكاتب #{item.userId}</span>
+        
+        <p className="text-gray-600 text-sm mb-4 leading-relaxed">
+          {item.content && item.content.length > 5 ? item.content : 'لا يوجد وصف متاح'}
+        </p>
+        
+        <div className="flex items-center text-xs text-gray-500 mb-3 gap-4">
+          <div className="flex items-center gap-1">
+            <User className="w-3 h-3" />
+            <span>{item.creator?.fullName || `الكاتب #${item.userId}`}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Calendar className="w-3 h-3" />
+            <span>{item.dateAdded ? new Date(item.dateAdded).toLocaleDateString('ar-EG') : 'غير متاح'}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Tag className="w-3 h-3" />
+            <span>{item.categoryName || 'غير محدد'}</span>
+          </div>
         </div>
-        <div className="flex items-center gap-1">
-          <Calendar className="w-3 h-3" />
-          <span>{new Date(item.dateAdded).toLocaleDateString('ar-EG')}</span>
+        
+        <div className="flex flex-wrap gap-1 mb-4">
+          {recommendation.recommendationFactors?.map((factor, index) => (
+            <span key={index} className="bg-[#E6D3A3] text-[#5C4033] px-2 py-1 rounded-full text-xs">
+              {factor}
+            </span>
+          )) }
         </div>
-        <div className="flex items-center gap-1">
-          <Tag className="w-3 h-3" />
-          <span>الفئة #{item.categoryId}</span>
-        </div>
-      </div>
-      
-      <div className="bg-[#f8f6f0] p-3 rounded-lg mb-4">
-        <p className="text-xs text-[#5C4033] font-medium mb-2">سبب التوصية:</p>
-        <p className="text-xs text-gray-600">{recommendation.reasonForRecommendation}</p>
-      </div>
-      
-      <div className="flex flex-wrap gap-1 mb-4">
-        {recommendation.recommendationFactors.map((factor, index) => (
-          <span key={index} className="bg-[#E6D3A3] text-[#5C4033] px-2 py-1 rounded-full text-xs">
-            {factor}
+        
+        <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+          <div className="flex items-center gap-3">
+            <button className="flex items-center gap-1 text-gray-500 hover:text-red-500 transition-colors">
+              <Heart className="w-4 h-4" />
+              <span className="text-sm">إعجاب</span>
+            </button>
+            <button className="flex items-center gap-1 text-gray-500 hover:text-blue-500 transition-colors">
+              <MessageCircle className="w-4 h-4" />
+              <span className="text-sm">تعليق</span>
+            </button>
+            <button className="flex items-center gap-1 text-gray-500 hover:text-green-500 transition-colors">
+              <Share2 className="w-4 h-4" />
+              <span className="text-sm">مشاركة</span>
+            </button>
+          </div>
+          <span className="text-xs bg-[#8B4513] text-white px-2 py-1 rounded-full">
+            مقال ثقافي
           </span>
-        ))}
-      </div>
-      
-      <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-        <div className="flex items-center gap-3">
-          <button className="flex items-center gap-1 text-gray-500 hover:text-red-500 transition-colors">
-            <Heart className="w-4 h-4" />
-            <span className="text-sm">إعجاب</span>
-          </button>
-          <button className="flex items-center gap-1 text-gray-500 hover:text-blue-500 transition-colors">
-            <MessageCircle className="w-4 h-4" />
-            <span className="text-sm">تعليق</span>
-          </button>
-          <button className="flex items-center gap-1 text-gray-500 hover:text-green-500 transition-colors">
-            <Share2 className="w-4 h-4" />
-            <span className="text-sm">مشاركة</span>
-          </button>
         </div>
-        <span className="text-xs bg-[#8B4513] text-white px-2 py-1 rounded-full">
-          مقال ثقافي
-        </span>
       </div>
     </div>
-  </div>
+  </Link>
 );
 
 const EmptyState = ({ activeTab }) => (
@@ -175,7 +192,8 @@ const RecommendationsPage = () => {
 
   const fetchRecommendations = async () => {
     if (!token) {
-      setError('لم يتم العثور على رمز المصادقة');
+      setError('لم يتم العثور على رمز المصادقة. يرجى تسجيل الدخول.');
+      setIsLoading(false);
       return;
     }
 
@@ -183,15 +201,7 @@ const RecommendationsPage = () => {
     setError(null);
 
     try {
-      let url;
-      if (activeTab === 'all') {
-        url = 'https://ourheritage.runasp.net/api/Recommendation?count=10';
-      } else if (activeTab === 'handicraft') {
-        url = 'https://ourheritage.runasp.net/api/Recommendation/by-type?type=1&count=10';
-      } else if (activeTab === 'cultural') {
-        url = 'https://ourheritage.runasp.net/api/Recommendation/cultural?count=10';
-      }
-
+      const url = `https://ourheritage.runasp.net/api/Recommendation/for-user?pageNumber=1&pageSize=10`;
       const res = await fetch(url, {
         method: 'GET',
         headers: {
@@ -206,7 +216,45 @@ const RecommendationsPage = () => {
       }
 
       const data = await res.json();
-      setRecommendations(data || []);
+      // Combine articles and handicrafts into a single recommendations array
+      const combinedRecommendations = [
+        ...(data.recommendedArticles || []).map(item => ({
+          item: {
+            itemType: 'CulturalArticle',
+            id: item.itemId,
+            itemId: item.itemId,
+            title: item.title,
+            content: item.content,
+            images: item.images,
+            categoryName: item.categoryName,
+            userId: item.creator?.userId,
+            creator: item.creator,
+            dateAdded: item.dateAdded || new Date().toISOString(),
+            price: item.price,
+          },
+          score: item.recommendationScore,
+          // recommendationFactors: item.recommendationFactors || ['User interactions', 'Similar users'],
+        })),
+        ...(data.recommendedHandicrafts || []).map(item => ({
+          item: {
+            itemType: 'HandiCraft',
+            id: item.itemId,
+            itemId: item.itemId,
+            title: item.title,
+            content: item.content,
+            images: item.images,
+            categoryName: item.categoryName,
+            userId: item.creator?.userId,
+            creator: item.creator,
+            dateAdded: item.dateAdded || new Date().toISOString(),
+            price: item.price,
+          },
+          score: item.recommendationScore,
+          // recommendationFactors: item.recommendationFactors || ['User interactions', 'Similar users'],
+        })),
+      ].sort((a, b) => b.score - a.score); // Sort by recommendation score descending
+
+      setRecommendations(combinedRecommendations);
     } catch (error) {
       console.error('Failed to fetch recommendations:', error);
       if (error.name === 'AbortError') {
@@ -252,7 +300,6 @@ const RecommendationsPage = () => {
 
   return (
     <div className="flex min-h-screen bg-[#f5f2eb] mt-20">
-      {/* Sidebar */}
       <aside className="w-80 bg-[#fdfaf4] shadow-lg border-l-4 border-[#8B4513]">
         <div className="p-6">
           <div className="text-center mb-6">
@@ -316,7 +363,6 @@ const RecommendationsPage = () => {
         </div>
       </aside>
 
-      {/* Main Content */}
       <main className="flex-1 px-8 py-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-8">
@@ -330,14 +376,14 @@ const RecommendationsPage = () => {
               </p>
             </div>
             
-            <button 
+            {/* <button 
               onClick={fetchRecommendations}
               disabled={isLoading}
               className="flex items-center gap-2 bg-[#8B4513] text-white px-4 py-2 rounded-lg hover:bg-[#6d3410] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
               <span>تحديث</span>
-            </button>
+            </button> */}
           </div>
 
           {isLoading ? (

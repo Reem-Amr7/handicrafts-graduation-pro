@@ -120,7 +120,7 @@ export default function NotificationBell() {
   };
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative " ref={dropdownRef}>
       <div
         onClick={handleToggle}
         className="relative w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white cursor-pointer transition duration-150"
@@ -134,12 +134,12 @@ export default function NotificationBell() {
       </div>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto bg-white rounded-2xl shadow-xl z-50">
+        <div className="absolute -right-40 mt-2 w-80 max-h-96 overflow-y-auto bg-white rounded-2xl shadow-xl z-50">
           <div className="p-4 border-b font-semibold text-[#894414]" style={{ backgroundColor: '#F5F5DC' }}>
             الإشعارات
           </div>
           {notifications.length === 0 ? (
-            <div className="p-4 text-sm text-center text-gray-500">لا توجد إشعارات</div>
+            <div className="p-4 text-sm text-center text-gray-500 ">لا توجد إشعارات</div>
           ) : (
             <ul>
               {notifications.map((notif, idx) => (

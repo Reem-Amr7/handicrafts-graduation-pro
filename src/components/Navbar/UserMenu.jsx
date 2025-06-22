@@ -1,17 +1,12 @@
 import React, { useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import { useUser } from "../../Context/User Context"; // تأكد من المسار الصحيح
+import { Link } from "react-router-dom";
+import { useUser } from "../../Context/User Context"; // تأكدي من المسار
 
 const UserMenu = ({ photo, onLogout }) => {
   const [showMenu, setShowMenu] = useState(false);
-  const navigate = useNavigate();
   const menuRef = useRef();
-  const { fullName, isLoading } = useUser(); // استخدام fullName و isLoading
+  const { fullName, isLoading } = useUser();
   const userId = localStorage.getItem("userId");
-
-  // تحقق من بيانات الـ fullName و isLoading
-  console.log("Full Name:", fullName); // تحقق من fullName
-  console.log("Is Loading:", isLoading); // تحقق من isLoading
 
   // إغلاق القائمة عند النقر خارجها
   const handleClickOutside = (event) => {
@@ -20,13 +15,11 @@ const UserMenu = ({ photo, onLogout }) => {
     }
   };
 
-  // الذهاب إلى الصفحة الشخصية
-  const goToProfile = () => {
-    if (userId) {
-      navigate(`/profile/${userId}`);
-      setShowMenu(false);
-    }
-  };
+  // تسجيل الاستماع للخارج
+  React.useEffect(() => {
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   return (
     <div className="relative" ref={menuRef}>
@@ -51,12 +44,18 @@ const UserMenu = ({ photo, onLogout }) => {
             top: "4.5rem",
           }}
         >
-          <button
-            onClick={goToProfile}
-            className="w-full text-right bg-gray-100 px-4 py-2 text-[#5D4037] font-semibold border-b hover:bg-red-50"
-          >
-            {isLoading ? "جاري التحميل..." : fullName || "الملف الشخصي"}
-          </button>
+          {userId ? (
+            <Link
+              to={`/profile/${userId}`}
+              onClick={() => setShowMenu(false)}
+              className="block w-full text-right bg-gray-100 px-4 py-2 text-[#5D4037] font-semibold border-b hover:bg-red-50"
+            >
+              {isLoading ? "جاري التحميل..." : fullName || "الملف الشخصي"}
+            </Link>
+          ) : (
+            <div className="px-4 py-2 text-red-600 text-sm">خطأ في تحميل المستخدم</div>
+          )}
+
           <button
             onClick={onLogout}
             className="w-full bg-gray-100 text-right px-4 py-2 text-red-600 hover:bg-red-50"

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import styles from "./ProductDetails.module.css";
 import defaultProductImage from "../../assets/image.png";
 import { TokenContext } from "../../Context/TokenContext";
@@ -8,6 +8,7 @@ import { useCart } from "../../Context/CartContext";
 export default function ProductDetails() {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
+  const [similarProducts, setSimilarProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const { token } = useContext(TokenContext);
   const { addToCart } = useCart();
@@ -16,20 +17,43 @@ export default function ProductDetails() {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const response = await fetch(`https://ourheritage.runasp.net/api/HandiCrafts/${id}`, {
+        // Fetch product details
+        const productResponse = await fetch(`https://ourheritage.runasp.net/api/HandiCrafts/${id}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
 
-        if (!response.ok) {
+        if (!productResponse.ok) {
           throw new Error("فشل تحميل البيانات");
         }
 
-        const data = await response.json();
-        setProduct(data);
+        const productData = await productResponse.json();
+        setProduct(productData);
+
+        // Fetch similar products using the recommendation API
+        const similarResponse = await fetch(
+          `https://ourheritage.runasp.net/api/Recommendation/similar-handicrafts/${id}?count=4`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: "text/plain",
+            },
+          }
+        );
+
+        if (!similarResponse.ok) {
+          throw new Error("فشل تحميل المنتجات المشابهة");
+        }
+
+        const similarData = await similarResponse.json();
+        // Sort similar products by recommendationScore in descending order
+        const sortedSimilarProducts = similarData.sort(
+          (a, b) => b.recommendationScore - a.recommendationScore
+        );
+        setSimilarProducts(sortedSimilarProducts);
       } catch (error) {
-        console.error("Error fetching product:", error.message);
+        console.error("Error fetching data:", error.message);
       } finally {
         setLoading(false);
       }
@@ -54,46 +78,74 @@ export default function ProductDetails() {
   };
 
   return (
-    <div className={styles.productDetails}>
-      <div className={styles.productImageSection}>
-        <img
-          src={product.imageOrVideo?.[0] || defaultProductImage}
-          alt={product.title}
-          className={styles.productImage}
-          onError={(e) => {
-            e.target.onerror = null;
-            e.target.src = defaultProductImage;
-          }}
-        />
-      </div>
-
-      <div className={styles.productInfoSection}>
-        <h2 className={styles.productTitle}>{product.title}</h2>
-        <div className={styles.rating}>⭐⭐⭐⭐⭐</div>
-        <div className={styles.price}>{product.price}.00$</div>
-
-        <div className={styles.quantitySection}>
-          <button className={styles.addToCart} onClick={handleAddToCart}>
-            أضف إلى السلة
-          </button>
-          <input
-            type="number"
-            value={quantity}
-            min="1"
-            className={styles.quantityInput}
-            onChange={(e) => setQuantity(e.target.value)}
+    <div className={styles.productDetailsContainer}>
+      <div className={styles.productDetails}>
+        <div className={styles.productImageSection}>
+          <img
+            src={product.imageOrVideo?.[0] || defaultProductImage}
+            alt={product.title}
+            className={styles.productImage}
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = defaultProductImage;
+            }}
           />
         </div>
 
-        <button className={styles.buyNow}>اشتري الآن</button>
+        <div className={styles.productInfoSection}>
+          <h2 className={styles.productTitle}>{product.title}</h2>
+          <div className={styles.rating}>⭐⭐⭐⭐⭐</div>
+          <div className={styles.price}>{product.price}.00$</div>
 
-        <div className={styles.extraInfo}>
-          <p><strong>بلد المنشأ:</strong> مصر</p>
-          <p><strong>الفئة:</strong> {product.categoryName}</p>
-          <p><strong>اسم الصانع:</strong> {product.nameOfUser}</p>
+          <div className={styles.quantitySection}>
+            <button className={styles.addToCart} onClick={handleAddToCart}>
+              أضف إلى السلة
+            </button>
+            <input
+              type="number"
+              value={quantity}
+              min="1"
+              className={styles.quantityInput}
+              onChange={(e) => setQuantity(e.target.value)}
+            />
+          </div>
+
+          <button className={styles.buyNow}>اشتري الآن</button>
+
+          <div className={styles.extraInfo}>
+            <p><strong>بلد المنشأ:</strong> مصر</p>
+            <p><strong>الفئة:</strong> {product.categoryName}</p>
+            <p><strong>اسم الصانع:</strong> {product.nameOfUser}</p>
+          </div>
         </div>
       </div>
+
+      {similarProducts.length > 0 && (
+        <div className={styles.similarProductsSection}>
+          <h2 className={styles.similarProductsTitle}>منتجات مشابهة</h2>
+          <div className={styles.similarProductsGrid}>
+            {similarProducts.map((similarProduct) => (
+              <Link
+                to={`/products/${similarProduct.itemId}`}
+                key={similarProduct.itemId}
+                className={styles.similarProductCard}
+              >
+                <img
+                  src={similarProduct.images?.[0] || defaultProductImage}
+                  alt={similarProduct.title}
+                  className={styles.similarProductImage}
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = defaultProductImage;
+                  }}
+                />
+                <h3 className={styles.similarProductTitle}>{similarProduct.title}</h3>
+                <p className={styles.similarProductPrice}>{similarProduct.price}.00$</p>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-
