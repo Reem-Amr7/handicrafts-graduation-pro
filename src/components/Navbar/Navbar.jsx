@@ -116,7 +116,7 @@ export default function Navbar() {
               <li><Link to="/home2" className={`${styles.navLink} ${location.pathname === '/home2' ? styles.activeLink : ''}`}>الحرفيين</Link></li>
               <li><Link to="/shop" className={`${styles.navLink} ${location.pathname === '/shop' ? styles.activeLink : ''}`}>المتجر</Link></li>
               <li><Link to="/home" className={`${styles.navLink} ${location.pathname === '/home' ? styles.activeLink : ''}`}>المجتمع</Link></li>
-              <li><Link to="/" className={`${styles.navLink} ${location.pathname === '/' ? styles.activeLink : ''}`}>الرئيسية</Link></li>
+              {/* <li><Link to="/" className={`${styles.navLink} ${location.pathname === '/' ? styles.activeLink : ''}`}>الرئيسية</Link></li> */}
             </ul>
           </nav>
         )}
