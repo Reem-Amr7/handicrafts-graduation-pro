@@ -27,7 +27,7 @@ export default function Cart() {
                 
                 <div className={styles.itemDetails}>
                   <h3>{item.name}</h3>
-                  <p>السعر: {item.price} جنيه</p>
+                  <p>السعر: {item.price} دولار </p>
                   
                   <div className={styles.quantityControl}>
                     <button 
@@ -46,7 +46,6 @@ export default function Cart() {
                       +
                     </button>
                   </div>
-
                   <button 
                     className={styles.removeBtn}
                     onClick={() => removeFromCart(item.id)}
@@ -65,19 +64,19 @@ export default function Cart() {
             
             <div className={styles.summaryRow}>
               <span>المجموع الفرعي:</span>
-              <span>{subtotal} جنيه</span>
+              <span>{subtotal} دولار </span>
             </div>
             
             <div className={styles.summaryRow}>
               <span>الشحن:</span>
-              <span>{shipping} جنيه</span>
+              <span>{shipping} دولار </span>
             </div>
             
             <hr className={styles.divider} />
             
             <div className={`${styles.summaryRow} ${styles.totalRow}`}>
               <span>الإجمالي:</span>
-              <span>{total} جنيه</span>
+              <span>{total} دولار </span>
             </div>
             
             <button className={styles.checkoutBtn}>إتمام الشراء</button>

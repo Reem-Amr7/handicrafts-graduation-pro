@@ -11,7 +11,7 @@ import Home from './components/Home/Home';
 import Blog from './components/Blog/Blog';
 import ProductDetails from './components/ProductDetails/ProductDetails';
 import Shop from './components/Shop/Shop';
-
+import FavoritesPage from './components/Shop/FavoritesPage';
 import Blogdetail from './components/Blogdetails/Blogdetail';
 import PostDetails from './components/Home/Postdetails';
 import HandicraftRecommendation from './components/Recommendation/recommend';
@@ -66,7 +66,7 @@ function App() {
 
 {path:"/foryou",element:<RecommendationsPage/>},
 
-
+{path:"/favorites", element:<FavoritesPage />},
 
         { path: "*", element: <Navigate to="/login" replace /> },
       ],

@@ -27,10 +27,8 @@ export default function ProductDetails() {
         if (!productResponse.ok) {
           throw new Error("فشل تحميل البيانات");
         }
-
         const productData = await productResponse.json();
         setProduct(productData);
-
         // Fetch similar products using the recommendation API
         const similarResponse = await fetch(
           `https://ourheritage.runasp.net/api/Recommendation/similar-handicrafts/${id}?count=4`,
@@ -41,11 +39,9 @@ export default function ProductDetails() {
             },
           }
         );
-
         if (!similarResponse.ok) {
           throw new Error("فشل تحميل المنتجات المشابهة");
         }
-
         const similarData = await similarResponse.json();
         // Sort similar products by recommendationScore in descending order
         const sortedSimilarProducts = similarData.sort(
@@ -58,7 +54,6 @@ export default function ProductDetails() {
         setLoading(false);
       }
     };
-
     fetchProduct();
   }, [id, token]);
 
